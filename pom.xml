@@ -5,7 +5,7 @@
 
   <groupId>com.github.fracpete</groupId>
   <artifactId>multisearch-weka-package</artifactId>
-  <version>2014.12.10-SNAPSHOT</version>
+  <version>2014.12.10</version>
   <packaging>jar</packaging>
 
   <name>multisearch</name>
