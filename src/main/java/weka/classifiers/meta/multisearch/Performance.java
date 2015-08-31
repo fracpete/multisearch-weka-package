@@ -20,12 +20,11 @@
 
 package weka.classifiers.meta.multisearch;
 
-import java.io.Serializable;
-
-import weka.classifiers.Evaluation;
 import weka.classifiers.meta.MultiSearch;
 import weka.core.SelectedTag;
 import weka.core.setupgenerator.Point;
+
+import java.io.Serializable;
 
 /**
  * A helper class for storing the performance of values in the parameter
@@ -103,36 +102,20 @@ public class Performance
    * @param evalType		the type of evaluation
    * @throws Exception	if retrieving of measures fails
    */
-  public Performance(Point<Object> values, Evaluation evaluation, int evalType) throws Exception {
+  public Performance(Point<Object> values, AbstractEvaluationWrapper evaluation, int evalType) throws Exception {
     super();
 
     m_Values     = values;
     m_Evaluation = evalType;
 
     if (evaluation != null) {
-      m_RMSE = evaluation.rootMeanSquaredError();
-      m_RRSE = evaluation.rootRelativeSquaredError();
-      m_MAE  = evaluation.meanAbsoluteError();
-      m_RAE  = evaluation.relativeAbsoluteError();
-
-      try {
-        m_CC = evaluation.correlationCoefficient();
-      }
-      catch (Exception e) {
-        m_CC = Double.NaN;
-      }
-      try {
-        m_ACC = evaluation.pctCorrect();
-      }
-      catch (Exception e) {
-        m_ACC = Double.NaN;
-      }
-      try {
-        m_Kappa = evaluation.kappa();
-      }
-      catch (Exception e) {
-        m_Kappa = Double.NaN;
-      }
+      m_RMSE  = evaluation.rootMeanSquaredError();
+      m_RRSE  = evaluation.rootRelativeSquaredError();
+      m_MAE   = evaluation.meanAbsoluteError();
+      m_RAE   = evaluation.relativeAbsoluteError();
+      m_CC    = evaluation.correlationCoefficient();
+      m_ACC   = evaluation.accuracy();
+      m_Kappa = evaluation.kappa();
     }
     else {
       m_RMSE  = Double.MAX_VALUE;

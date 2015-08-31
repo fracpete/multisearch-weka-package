@@ -15,26 +15,16 @@
 
 /*
  * MultiSearch.java
- * Copyright (C) 2008-2014 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.classifiers.meta;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.Random;
-import java.util.Vector;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
-import weka.classifiers.Evaluation;
 import weka.classifiers.RandomizableSingleClassifierEnhancer;
 import weka.classifiers.functions.LinearRegression;
+import weka.classifiers.meta.multisearch.DefaultEvaluationTask;
 import weka.classifiers.meta.multisearch.Performance;
 import weka.classifiers.meta.multisearch.PerformanceCache;
 import weka.classifiers.meta.multisearch.PerformanceComparator;
@@ -60,6 +50,15 @@ import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
 import weka.filters.Filter;
 import weka.filters.unsupervised.instance.Resample;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Vector;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  <!-- globalinfo-start -->
@@ -198,116 +197,6 @@ public class MultiSearch
   /** for serialization. */
   private static final long serialVersionUID = -5129316523575906233L;
 
-  /**
-   * Helper class for evaluating a setup.
-   */
-  protected static class EvaluationTask
-    implements Runnable {
-
-    /** the owner. */
-    protected MultiSearch m_Owner;
-
-    /** the data to use for training. */
-    protected Instances m_Data;
-
-    /** the setup generator to use. */
-    protected SetupGenerator m_Generator;
-
-    /** the setup. */
-    protected Point<Object> m_Values;
-
-    /** the number of folds for cross-validation. */
-    protected int m_Folds;
-
-    /** the type of evaluation. */
-    protected int m_Evaluation = Performance.EVALUATION_CC;
-
-    /**
-     * Initializes the task.
-     *
-     * @param owner		the owning MultiSearch classifier
-     * @param inst		the data
-     * @param generator		the generator to use
-     * @param values		the setup values
-     * @param folds		the number of cross-validation folds
-     * @param eval		the type of evaluation
-     */
-    public EvaluationTask(MultiSearch owner, Instances inst,
-        SetupGenerator generator, Point<Object> values, int folds, int eval) {
-
-      super();
-
-      m_Owner      = owner;
-      m_Data       = inst;
-      m_Generator  = generator;
-      m_Values     = values;
-      m_Folds      = folds;
-      m_Evaluation = eval;
-    }
-
-    /**
-     * Performs the evaluation.
-     */
-    public void run() {
-      Point<Object>	evals;
-      Evaluation	eval;
-      Classifier	classifier;
-      MultiSearch	multi;
-      Performance	performance;
-      boolean		completed;
-
-      try {
-        // setup
-        evals      = m_Generator.evaluate(m_Values);
-        multi      = (MultiSearch) m_Generator.setup(m_Owner, evals);
-        classifier = multi.getClassifier();
-
-        // evaluate
-        try {
-          eval = new Evaluation(m_Data);
-          eval.setDiscardPredictions(true);
-          if (m_Folds >= 2) {
-            eval.crossValidateModel(classifier, m_Data, m_Folds, new Random(m_Owner.getSeed()));
-          }
-          else {
-            classifier.buildClassifier(m_Data);
-            eval.evaluateModel(classifier, m_Data);
-          }
-          completed = true;
-        }
-        catch (Exception e) {
-          eval = null;
-          System.err.println("Encountered exception while evaluating classifier, skipping!");
-          System.err.println("- Classifier: " + m_Owner.getCommandline(classifier));
-          e.printStackTrace();
-          completed = false;
-        }
-
-        // store performance
-        performance = new Performance(m_Values, eval, m_Evaluation);
-        m_Owner.addPerformance(performance, m_Folds);
-
-        // log
-        m_Owner.log(performance + ": cached=false");
-
-        // release slot
-        m_Owner.completedEvaluation(classifier, completed);
-      }
-      catch (Exception e) {
-        System.err.println("Encountered exception while evaluating classifier, skipping!");
-        System.err.println("- Values: " + m_Values);
-        e.printStackTrace();
-        m_Owner.completedEvaluation(m_Values, false);
-      }
-
-      // clean up
-      m_Owner     = null;
-      m_Data      = null;
-      m_Generator = null;
-      m_Values    = null;
-    }
-  }
-
   /** evaluation. */
   public static final Tag[] TAGS_EVALUATION = {
     new Tag(Performance.EVALUATION_CC, "CC", "Correlation coefficient"),
@@ -431,49 +320,49 @@ public class MultiSearch
    */
   public String globalInfo() {
     return
-        "Performs a search of an arbitrary number of parameters of a classifier "
-      + "and chooses the best pair found for the actual filtering and training.\n"
-      + "The default MultiSearch is using the following FilteredClassifier setup:\n"
-      + " - classifier: LinearRegression, searching for the \"Ridge\"\n"
-      + " - filter: PLSFilter, searching for the \"# of Components\"\n"
-      + "The properties being explored are totally up to the user, it can be a "
-      + "mix of classifier and filter properties, or only classifier ones or "
-      + "only filter ones.\n"
-      + "\n"
-      + "Since the the MultiSearch classifier itself is used as the base object "
-      + "for the setups being generated, one has to prefix the properties with "
-      + "'classifier.' (referring to MultiSearch's 'classifier' property).\n"
-      + "E.g., if you have a FilteredClassifier selected as base classifier, "
-      + "sporting a PLSFilter and you want to explore the number of PLS components, "
-      + "then your property will be made up of the following components:\n"
-      + " - classifier: referring to MultiSearch's classifier property\n"
-      + "   i.e., the FilteredClassifier.\n"
-      + " - filter: referring to the FilteredClassifier's property (= PLSFilter)\n"
-      + " - numComponents: the actual property of the PLSFilter that we want to modify\n"
-      + "And assembled, the property looks like this:\n"
-      + "  classifier.filter.numComponents\n"
-      + "\n"
-      + "The initial space is worked on with 2-fold CV to determine the values "
-      + "of the parameters for the selected type of evaluation (e.g., "
-      + "accuracy). The best point in the space is then taken as center and a "
-      + "10-fold CV is performed with the adjacent parameters. If better parameters "
-      + "are found, then this will act as new center and another 10-fold CV will "
-      + "be performed (kind of hill-climbing). This process is repeated until "
-      + "no better pair is found or the best pair is on the border of the parameter "
-      + "space.\n"
-      + "The number of CV-folds for the initial and subsequent spaces can be "
-      + "adjusted, of course.\n"
-      + "\n"
-      + "The outcome of a mathematical function (= double), MultiSearch will convert "
-      + "to integers (values are just cast to int), booleans (0 is false, otherwise "
-      + "true), float, char and long if necessary.\n"
-      + "Via a user-supplied 'list' of parameters (blank-separated), one can also "
-      + "set strings and selected tags (drop-down comboboxes in Weka's "
-      + "GenericObjectEditor). Classnames with options (e.g., classifiers with "
-      + "their options) are possible as well.\n"
-      + "\n"
-      + "The best classifier setup can be accessed after the buildClassifier "
-      + "call via the getBestClassifier method.";
+      "Performs a search of an arbitrary number of parameters of a classifier "
+	+ "and chooses the best pair found for the actual filtering and training.\n"
+	+ "The default MultiSearch is using the following FilteredClassifier setup:\n"
+	+ " - classifier: LinearRegression, searching for the \"Ridge\"\n"
+	+ " - filter: PLSFilter, searching for the \"# of Components\"\n"
+	+ "The properties being explored are totally up to the user, it can be a "
+	+ "mix of classifier and filter properties, or only classifier ones or "
+	+ "only filter ones.\n"
+	+ "\n"
+	+ "Since the the MultiSearch classifier itself is used as the base object "
+	+ "for the setups being generated, one has to prefix the properties with "
+	+ "'classifier.' (referring to MultiSearch's 'classifier' property).\n"
+	+ "E.g., if you have a FilteredClassifier selected as base classifier, "
+	+ "sporting a PLSFilter and you want to explore the number of PLS components, "
+	+ "then your property will be made up of the following components:\n"
+	+ " - classifier: referring to MultiSearch's classifier property\n"
+	+ "   i.e., the FilteredClassifier.\n"
+	+ " - filter: referring to the FilteredClassifier's property (= PLSFilter)\n"
+	+ " - numComponents: the actual property of the PLSFilter that we want to modify\n"
+	+ "And assembled, the property looks like this:\n"
+	+ "  classifier.filter.numComponents\n"
+	+ "\n"
+	+ "The initial space is worked on with 2-fold CV to determine the values "
+	+ "of the parameters for the selected type of evaluation (e.g., "
+	+ "accuracy). The best point in the space is then taken as center and a "
+	+ "10-fold CV is performed with the adjacent parameters. If better parameters "
+	+ "are found, then this will act as new center and another 10-fold CV will "
+	+ "be performed (kind of hill-climbing). This process is repeated until "
+	+ "no better pair is found or the best pair is on the border of the parameter "
+	+ "space.\n"
+	+ "The number of CV-folds for the initial and subsequent spaces can be "
+	+ "adjusted, of course.\n"
+	+ "\n"
+	+ "The outcome of a mathematical function (= double), MultiSearch will convert "
+	+ "to integers (values are just cast to int), booleans (0 is false, otherwise "
+	+ "true), float, char and long if necessary.\n"
+	+ "Via a user-supplied 'list' of parameters (blank-separated), one can also "
+	+ "set strings and selected tags (drop-down comboboxes in Weka's "
+	+ "GenericObjectEditor). Classnames with options (e.g., classifiers with "
+	+ "their options) are possible as well.\n"
+	+ "\n"
+	+ "The best classifier setup can be accessed after the buildClassifier "
+	+ "call via the getBestClassifier method.";
   }
 
   /**
@@ -505,47 +394,47 @@ public class MultiSearch
     for (i = 0; i < TAGS_EVALUATION.length; i++) {
       tag = new SelectedTag(TAGS_EVALUATION[i].getID(), TAGS_EVALUATION);
       desc  +=   "\t" + tag.getSelectedTag().getIDStr()
-      	       + " = " + tag.getSelectedTag().getReadable()
-      	       + "\n";
+	+ " = " + tag.getSelectedTag().getReadable()
+	+ "\n";
     }
     result.addElement(new Option(
-	"\tDetermines the parameter used for evaluation:\n"
+      "\tDetermines the parameter used for evaluation:\n"
 	+ desc
 	+ "\t(default: " + new SelectedTag(Performance.EVALUATION_CC, TAGS_EVALUATION) + ")",
-	"E", 1, "-E " + Tag.toOptionList(TAGS_EVALUATION)));
+      "E", 1, "-E " + Tag.toOptionList(TAGS_EVALUATION)));
 
     result.addElement(new Option(
-	"\tA property search setup.\n",
-	"search", 1, "-search \"<classname options>\""));
+      "\tA property search setup.\n",
+      "search", 1, "-search \"<classname options>\""));
 
     result.addElement(new Option(
-	"\tThe size (in percent) of the sample to search the inital space with.\n"
+      "\tThe size (in percent) of the sample to search the inital space with.\n"
 	+ "\t(default: 100)",
-	"sample-size", 1, "-sample-size <num>"));
+      "sample-size", 1, "-sample-size <num>"));
 
     result.addElement(new Option(
-	"\tThe log file to log the messages to.\n"
+      "\tThe log file to log the messages to.\n"
 	+ "\t(default: none)",
-	"log-file", 1, "-log-file <filename>"));
+      "log-file", 1, "-log-file <filename>"));
 
     result.addElement(new Option(
-	"\tThe number of cross-validation folds for the initial space.\n"
+      "\tThe number of cross-validation folds for the initial space.\n"
 	+ "\tNumbers smaller than 2 turn off cross-validation and just\n"
 	+ "\tperform evaluation on the training set.\n"
 	+ "\t(default: 2)",
-	"initial-folds", 1, "-initial-folds <num>"));
+      "initial-folds", 1, "-initial-folds <num>"));
 
     result.addElement(new Option(
-	"\tThe number of cross-validation folds for the subsequent sub-spaces.\n"
+      "\tThe number of cross-validation folds for the subsequent sub-spaces.\n"
 	+ "\tNumbers smaller than 2 turn off cross-validation and just\n"
 	+ "\tperform evaluation on the training set.\n"
 	+ "\t(default: 10)",
-	"subsequent-folds", 1, "-subsequent-folds <num>"));
+      "subsequent-folds", 1, "-subsequent-folds <num>"));
 
     result.addElement(new Option(
-        "\tNumber of execution slots.\n"
-        + "\t(default 1 - i.e. no parallelism)",
-        "num-slots", 1, "-num-slots <num>"));
+      "\tNumber of execution slots.\n"
+	+ "\t(default 1 - i.e. no parallelism)",
+      "num-slots", 1, "-num-slots <num>"));
 
     en = super.listOptions();
     while (en.hasMoreElements())
@@ -777,22 +666,22 @@ public class MultiSearch
     Capabilities cap = newClassifier.getCapabilities();
 
     numeric =    cap.handles(Capability.NUMERIC_CLASS)
-    	      || cap.hasDependency(Capability.NUMERIC_CLASS);
+      || cap.hasDependency(Capability.NUMERIC_CLASS);
 
     nominal =    cap.handles(Capability.NOMINAL_CLASS)
-              || cap.hasDependency(Capability.NOMINAL_CLASS)
-              || cap.handles(Capability.BINARY_CLASS)
-              || cap.hasDependency(Capability.BINARY_CLASS)
-              || cap.handles(Capability.UNARY_CLASS)
-              || cap.hasDependency(Capability.UNARY_CLASS);
+      || cap.hasDependency(Capability.NOMINAL_CLASS)
+      || cap.handles(Capability.BINARY_CLASS)
+      || cap.hasDependency(Capability.BINARY_CLASS)
+      || cap.handles(Capability.UNARY_CLASS)
+      || cap.hasDependency(Capability.UNARY_CLASS);
 
     if ((m_Evaluation == Performance.EVALUATION_CC) && !numeric)
       throw new IllegalArgumentException(
-	  "Classifier needs to handle numeric class for chosen type of evaluation!");
+	"Classifier needs to handle numeric class for chosen type of evaluation!");
 
     if (((m_Evaluation == Performance.EVALUATION_ACC) || (m_Evaluation == Performance.EVALUATION_KAPPA)) && !nominal)
       throw new IllegalArgumentException(
-	  "Classifier needs to handle nominal class for chosen type of evaluation!");
+	"Classifier needs to handle nominal class for chosen type of evaluation!");
 
     super.setClassifier(newClassifier);
 
@@ -840,8 +729,8 @@ public class MultiSearch
    */
   public String evaluationTipText() {
     return
-        "Sets the criterion for evaluating the classifier performance and "
-      + "choosing the best one.";
+      "Sets the criterion for evaluating the classifier performance and "
+	+ "choosing the best one.";
   }
 
   /**
@@ -928,9 +817,9 @@ public class MultiSearch
    */
   public String initialSpaceNumFoldsTipText() {
     return
-        "The number of cross-validation folds when evaluating the initial "
-      + "space; values smaller than 2 turn cross-validation off and simple "
-      + "evaluation on the training set is performed.";
+      "The number of cross-validation folds when evaluating the initial "
+	+ "space; values smaller than 2 turn cross-validation off and simple "
+	+ "evaluation on the training set is performed.";
   }
 
   /**
@@ -959,9 +848,9 @@ public class MultiSearch
    */
   public String subsequentSpaceNumFoldsTipText() {
     return
-        "The number of cross-validation folds when evaluating the subsequent "
-      + "sub-spaces; values smaller than 2 turn cross-validation off and simple "
-      + "evaluation on the training set is performed.";
+      "The number of cross-validation folds when evaluating the subsequent "
+	+ "sub-spaces; values smaller than 2 turn cross-validation off and simple "
+	+ "evaluation on the training set is performed.";
   }
 
   /**
@@ -1084,9 +973,9 @@ public class MultiSearch
     while (iter.hasNext()) {
       capab = (Capability) iter.next();
       if (    (capab != Capability.BINARY_CLASS)
-	   && (capab != Capability.NOMINAL_CLASS)
-	   && (capab != Capability.NUMERIC_CLASS)
-	   && (capab != Capability.DATE_CLASS) )
+	&& (capab != Capability.NOMINAL_CLASS)
+	&& (capab != Capability.NUMERIC_CLASS)
+	&& (capab != Capability.DATE_CLASS) )
 	result.disable(capab);
     }
 
@@ -1108,7 +997,7 @@ public class MultiSearch
    * @param obj		the object to create the commandline for
    * @return		the commandline
    */
-  protected String getCommandline(Object obj) {
+  public String getCommandline(Object obj) {
     String	result;
 
     result = obj.getClass().getName();
@@ -1124,7 +1013,7 @@ public class MultiSearch
    *
    * @param message	the message to print or store in a log file
    */
-  protected void log(String message) {
+  public void log(String message) {
     log(message, false);
   }
 
@@ -1136,7 +1025,7 @@ public class MultiSearch
    * @param onlyLog	if true the message will only be put into the log file
    * 			but not to stdout
    */
-  protected void log(String message, boolean onlyLog) {
+  public void log(String message, boolean onlyLog) {
     // print to stdout?
     if (getDebug() && (!onlyLog))
       System.out.println(message);
@@ -1230,8 +1119,8 @@ public class MultiSearch
     log("Starting thread pool with " + m_NumExecutionSlots + " slots...");
 
     m_ExecutorPool = new ThreadPoolExecutor(
-	m_NumExecutionSlots, m_NumExecutionSlots,
-        120, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+      m_NumExecutionSlots, m_NumExecutionSlots,
+      120, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
   }
 
   /**
@@ -1254,7 +1143,7 @@ public class MultiSearch
   protected synchronized void block(boolean doBlock) {
     if (doBlock) {
       try {
-        wait();
+	wait();
       }
       catch (InterruptedException ex) {
 	// ignored
@@ -1272,7 +1161,7 @@ public class MultiSearch
    * @param obj		the classifier or setup values that was attempted to train
    * @param success 	whether the classifier trained successfully
    */
-  protected synchronized void completedEvaluation(Object obj, boolean success) {
+  public synchronized void completedEvaluation(Object obj, boolean success) {
     if (!success) {
       m_Failed++;
       if (m_Debug) {
@@ -1288,8 +1177,8 @@ public class MultiSearch
 
     if (m_Completed + m_Failed == m_NumSetups) {
       if (m_Failed > 0) {
-        if (m_Debug)
-          System.err.println("Problem building classifiers - some failed to be trained.");
+	if (m_Debug)
+	  System.err.println("Problem building classifiers - some failed to be trained.");
       }
       block(false);
     }
@@ -1303,12 +1192,27 @@ public class MultiSearch
    * @param folds	the number of folds
    * @see		#m_Failed
    */
-  protected void addPerformance(Performance performance, int folds) {
+  public void addPerformance(Performance performance, int folds) {
     if (m_Failed > 0)
       return;
 
     m_Performances.add(performance);
     m_Cache.add(folds, performance);
+  }
+
+  /**
+   * Creates a new evaluation task object.
+   *
+   * @param owner	the owner
+   * @param inst	the data
+   * @param generator	the setup generator
+   * @param values	the values
+   * @param folds	the number of folds
+   * @param evaluation	the type of evaluation
+   * @return		the task
+   */
+  protected DefaultEvaluationTask newEvaluationTask(MultiSearch owner, Instances inst, SetupGenerator generator, Point<Object >values, int folds, int evaluation) {
+    return new DefaultEvaluationTask(owner, inst, generator, values, folds, evaluation);
   }
 
   /**
@@ -1331,7 +1235,7 @@ public class MultiSearch
     boolean			allCached;
     Performance			p1;
     Performance			p2;
-    EvaluationTask		newTask;
+    DefaultEvaluationTask newTask;
 
     m_Performances.clear();
 
@@ -1358,9 +1262,8 @@ public class MultiSearch
       }
       else {
 	allCached = false;
-	newTask   = new EvaluationTask(
-	    this, inst, m_Generator, values, folds, m_Evaluation);
-        m_ExecutorPool.execute(newTask);
+	newTask   = newEvaluationTask(this, inst, m_Generator, values, folds, m_Evaluation);
+	m_ExecutorPool.execute(newTask);
       }
     }
 
@@ -1511,9 +1414,9 @@ public class MultiSearch
     m_Space = m_Generator.getSpace();
 
     log("\n"
-	+ getClass().getName() + "\n"
-	+ getClass().getName().replaceAll(".", "=") + "\n"
-	+ "Options: " + Utils.joinOptions(getOptions()) + "\n");
+      + getClass().getName() + "\n"
+      + getClass().getName().replaceAll(".", "=") + "\n"
+      + "Options: " + Utils.joinOptions(getOptions()) + "\n");
 
     // find best
     m_Values = findBest(new Instances(data));
@@ -1558,16 +1461,16 @@ public class MultiSearch
     }
     else {
       result =
-      	  this.getClass().getName() + ":\n"
-      	+ "Classifier: " + getCommandline(getBestClassifier()) + "\n\n";
+	this.getClass().getName() + ":\n"
+	  + "Classifier: " + getCommandline(getBestClassifier()) + "\n\n";
       for (i = 0; i < m_Generator.getParameters().length; i++)
-      	result += (i+1) + ". property: " + m_Generator.getParameters()[i].getProperty() + "\n";
+	result += (i+1) + ". property: " + m_Generator.getParameters()[i].getProperty() + "\n";
       result +=   "Evaluation: " + getEvaluation().getSelectedTag().getReadable() + "\n"
-      	        + "Coordinates: " + getValues() + "\n";
+	+ "Coordinates: " + getValues() + "\n";
 
       result +=
-	  "Values: " + m_Generator.evaluate(getValues()) + "\n\n"
-        + m_Classifier.toString();
+	"Values: " + m_Generator.evaluate(getValues()) + "\n\n"
+	  + m_Classifier.toString();
     }
 
     return result;

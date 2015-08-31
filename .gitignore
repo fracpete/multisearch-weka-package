@@ -11,3 +11,4 @@ release.properties
 build/
 dist/
 doc/
+*.iml
