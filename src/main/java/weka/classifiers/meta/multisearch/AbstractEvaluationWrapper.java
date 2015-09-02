@@ -20,6 +20,8 @@
 
 package weka.classifiers.meta.multisearch;
 
+import weka.core.Tag;
+
 import java.io.Serializable;
 
 /**
@@ -27,12 +29,16 @@ import java.io.Serializable;
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
  * @version $Revision$
- * @param <T>	the type of evaluation to wrap
+ * @param <T> the type of evaluation to wrap
+ * @param <M> the associated metrics
  */
-public abstract class AbstractEvaluationWrapper<T>
+public abstract class AbstractEvaluationWrapper<T, M extends AbstractEvaluationMetrics>
   implements Serializable {
 
   private static final long serialVersionUID = -4712561735709150591L;
+
+  /** the metrics in use. */
+  protected M m_Metrics;
 
   /**
    * Initializes the wrapper.
@@ -40,8 +46,16 @@ public abstract class AbstractEvaluationWrapper<T>
    * @param eval	the evaluation to wrap
    */
   public AbstractEvaluationWrapper(T eval) {
+    m_Metrics = newMetrics();
     setEvaluation(eval);
   }
+
+  /**
+   * Returns the metrics to use.
+   *
+   * @return		the metrics
+   */
+  protected abstract M newMetrics();
 
   /**
    * Sets the evaluation object to use.
@@ -51,51 +65,29 @@ public abstract class AbstractEvaluationWrapper<T>
   protected abstract void setEvaluation(T eval);
 
   /**
-   * Returns the accuracy for nominal classes, NaN for numeric ones.
+   * Returns the metrics.
    *
-   * @return		the accuracy
+   * @return		the metrics
    */
-  public abstract double accuracy();
+  public M getMetrics() {
+    return m_Metrics;
+  }
 
   /**
-   * Returns the kappa for nominal classes, NaN for numeric ones.
+   * Returns the metric for the given tag.
    *
-   * @return		the kappa
+   * @param tag		the tag to get the metric for
+   * @return		the metric
    */
-  public abstract double kappa();
+  public double getMetric(Tag tag) {
+    return getMetric(tag.getID());
+  }
 
   /**
-   * Returns the correlation coefficient for numeric classes, NaN for nominal ones.
+   * Returns the metric for the given ID.
    *
-   * @return		the correlation coefficient
+   * @param id		the id to get the metric for
+   * @return		the metric
    */
-  public abstract double correlationCoefficient();
-
-  /**
-   * Returns the root mean squared error.
-   *
-   * @return		the error
-   */
-  public abstract double rootMeanSquaredError();
-
-  /**
-   * Returns the root relative squared error.
-   *
-   * @return		the error
-   */
-  public abstract double rootRelativeSquaredError();
-
-  /**
-   * Returns the mean absolute error.
-   *
-   * @return		the error
-   */
-  public abstract double meanAbsoluteError();
-
-  /**
-   * Returns the relative absolute error.
-   *
-   * @return		the error
-   */
-  public abstract double relativeAbsoluteError();
+  public abstract double getMetric(int id);
 }

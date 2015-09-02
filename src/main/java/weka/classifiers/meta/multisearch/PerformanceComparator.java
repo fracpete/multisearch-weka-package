@@ -15,15 +15,13 @@
 
 /*
  * PerformanceComparator.java
- * Copyright (C) 2008-2014 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.classifiers.meta.multisearch;
 
 import java.io.Serializable;
 import java.util.Comparator;
-
-import weka.classifiers.meta.MultiSearch;
 
 /**
  * A concrete Comparator for the Performance class.
@@ -38,30 +36,40 @@ public class PerformanceComparator
   /** for serialization. */
   private static final long serialVersionUID = 6507592831825393847L;
 
-  /** the performance measure to use for comparison.
-   * @see MultiSearch#TAGS_EVALUATION */
+  /** the performance measure to use for comparison. */
   protected int m_Evaluation;
+
+  /** the metrics to use. */
+  protected AbstractEvaluationMetrics m_Metrics;
 
   /**
    * initializes the comparator with the given performance measure.
    *
    * @param evaluation	the performance measure to use
-   * @see MultiSearch#TAGS_EVALUATION
    */
-  public PerformanceComparator(int evaluation) {
+  public PerformanceComparator(int evaluation, AbstractEvaluationMetrics metrics) {
     super();
 
     m_Evaluation = evaluation;
+    m_Metrics    = metrics;
   }
 
   /**
    * returns the performance measure that's used to compare the objects.
    *
    * @return the performance measure
-   * @see MultiSearch#TAGS_EVALUATION
    */
   public int getEvaluation() {
     return m_Evaluation;
+  }
+
+  /**
+   * Returns the metrics in use.
+   *
+   * @return the metrics
+   */
+  public AbstractEvaluationMetrics getMetrics() {
+    return m_Metrics;
   }
 
   /**
@@ -94,9 +102,7 @@ public class PerformanceComparator
     // only correlation coefficient/accuracy/kappa obey to this order, for the
     // errors (and the combination of all three), the smaller the number the
     // better -> hence invert them
-    if (    (getEvaluation() != Performance.EVALUATION_CC)
-        && (getEvaluation() != Performance.EVALUATION_ACC)
-        && (getEvaluation() != Performance.EVALUATION_KAPPA) )
+    if (getMetrics().invert(getEvaluation()))
       result = -result;
 
     return result;

@@ -29,7 +29,7 @@ import weka.classifiers.Evaluation;
  * @version $Revision$
  */
 public class DefaultEvaluationWrapper
-  extends AbstractEvaluationWrapper<Evaluation> {
+  extends AbstractEvaluationWrapper<Evaluation, DefaultEvaluationMetrics> {
 
   private static final long serialVersionUID = 931329614934902835L;
 
@@ -46,6 +46,16 @@ public class DefaultEvaluationWrapper
   }
 
   /**
+   * Returns the metrics to use.
+   *
+   * @return		the metrics
+   */
+  @Override
+  protected DefaultEvaluationMetrics newMetrics() {
+    return new DefaultEvaluationMetrics();
+  }
+
+  /**
    * Sets the evaluation object to use.
    *
    * @param eval	the evaluation
@@ -56,89 +66,33 @@ public class DefaultEvaluationWrapper
   }
 
   /**
-   * Returns the accuracy for nominal classes, NaN for numeric ones.
+   * Returns the metric for the given ID.
    *
-   * @return		the accuracy
+   * @param id		the id to get the metric for
+   * @return		the metric
    */
-  @Override
-  public double accuracy() {
+  public double getMetric(int id) {
     try {
-      return m_Evaluation.pctCorrect();
-    }
-    catch (Exception e) {
-      return Double.NaN;
-    }
-  }
-
-  /**
-   * Returns the kappa for nominal classes, NaN for numeric ones.
-   *
-   * @return		the kappa
-   */
-  @Override
-  public double kappa() {
-    try {
-      return m_Evaluation.kappa();
-    }
-    catch (Exception e) {
-      return Double.NaN;
-    }
-  }
-
-  /**
-   * Returns the correlation coefficient for numeric classes, NaN for nominal ones.
-   *
-   * @return		the correlation coefficient
-   */
-  @Override
-  public double correlationCoefficient() {
-    try {
-      return m_Evaluation.correlationCoefficient();
-    }
-    catch (Exception e) {
-      return Double.NaN;
-    }
-  }
-
-  /**
-   * Returns the root mean squared error.
-   *
-   * @return		the error
-   */
-  @Override
-  public double rootMeanSquaredError() {
-    return m_Evaluation.rootMeanSquaredError();
-  }
-
-  /**
-   * Returns the root relative squared error.
-   *
-   * @return		the error
-   */
-  @Override
-  public double rootRelativeSquaredError() {
-    return m_Evaluation.rootRelativeSquaredError();
-  }
-
-  /**
-   * Returns the mean absolute error.
-   *
-   * @return		the error
-   */
-  @Override
-  public double meanAbsoluteError() {
-    return m_Evaluation.meanAbsoluteError();
-  }
-
-  /**
-   * Returns the relative absolute error.
-   *
-   * @return		the error
-   */
-  @Override
-  public double relativeAbsoluteError() {
-    try {
-      return m_Evaluation.relativeAbsoluteError();
+      switch (id) {
+        case DefaultEvaluationMetrics.EVALUATION_KAPPA:
+          return m_Evaluation.kappa();
+        case DefaultEvaluationMetrics.EVALUATION_ACC:
+          return m_Evaluation.pctCorrect();
+        case DefaultEvaluationMetrics.EVALUATION_CC:
+          return m_Evaluation.correlationCoefficient();
+        case DefaultEvaluationMetrics.EVALUATION_COMBINED:
+          return (1 - StrictMath.abs(m_Evaluation.correlationCoefficient()) + m_Evaluation.rootRelativeSquaredError() + m_Evaluation.relativeAbsoluteError());
+        case DefaultEvaluationMetrics.EVALUATION_MAE:
+          return m_Evaluation.meanAbsoluteError();
+        case DefaultEvaluationMetrics.EVALUATION_RAE:
+          return m_Evaluation.relativeAbsoluteError();
+        case DefaultEvaluationMetrics.EVALUATION_RMSE:
+          return m_Evaluation.rootMeanSquaredError();
+        case DefaultEvaluationMetrics.EVALUATION_RRSE:
+          return m_Evaluation.rootRelativeSquaredError();
+        default:
+          return Double.NaN;
+      }
     }
     catch (Exception e) {
       return Double.NaN;

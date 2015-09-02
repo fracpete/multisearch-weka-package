@@ -15,16 +15,16 @@
 
 /*
  * Performance.java
- * Copyright (C) 2008-2014 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.classifiers.meta.multisearch;
 
-import weka.classifiers.meta.MultiSearch;
-import weka.core.SelectedTag;
+import weka.core.Tag;
 import weka.core.setupgenerator.Point;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * A helper class for storing the performance of values in the parameter
@@ -40,56 +40,17 @@ public class Performance
   /** for serialization. */
   private static final long serialVersionUID = -4374706475277588755L;
 
-  /** evaluation via: Correlation coefficient. */
-  public static final int EVALUATION_CC = 0;
-
-  /** evaluation via: Root mean squared error. */
-  public static final int EVALUATION_RMSE = 1;
-
-  /** evaluation via: Root relative squared error. */
-  public static final int EVALUATION_RRSE = 2;
-
-  /** evaluation via: Mean absolute error. */
-  public static final int EVALUATION_MAE = 3;
-
-  /** evaluation via: Relative absolute error. */
-  public static final int EVALUATION_RAE = 4;
-
-  /** evaluation via: Combined = (1-CC) + RRSE + RAE. */
-  public static final int EVALUATION_COMBINED = 5;
-
-  /** evaluation via: Accuracy. */
-  public static final int EVALUATION_ACC = 6;
-
-  /** evaluation via: Kappa statistic. */
-  public static final int EVALUATION_KAPPA = 7;
-
   /** the values the filter/classifier were built with. */
   protected Point<Object> m_Values;
 
   /** the evaluation type. */
   protected int m_Evaluation;
 
-  /** the Correlation coefficient. */
-  protected double m_CC;
+  /** the metrics. */
+  protected AbstractEvaluationMetrics m_Metrics;
 
-  /** the Root mean squared error. */
-  protected double m_RMSE;
-
-  /** the Root relative squared error. */
-  protected double m_RRSE;
-
-  /** the Mean absolute error. */
-  protected double m_MAE;
-
-  /** the Relative absolute error. */
-  protected double m_RAE;
-
-  /** the Accuracy. */
-  protected double m_ACC;
-
-  /** the Kappa statistic. */
-  protected double m_Kappa;
+  /** stores the metric values. */
+  protected HashMap<Integer,Double> m_MetricValues;
 
   /**
    * Initializes the performance container. If the Evaluation object is null,
@@ -105,26 +66,15 @@ public class Performance
   public Performance(Point<Object> values, AbstractEvaluationWrapper evaluation, int evalType) throws Exception {
     super();
 
-    m_Values     = values;
-    m_Evaluation = evalType;
-
+    m_Values       = values;
+    m_Evaluation   = evalType;
+    m_MetricValues = new HashMap<Integer, Double>();
+    m_Metrics      = null;
     if (evaluation != null) {
-      m_RMSE  = evaluation.rootMeanSquaredError();
-      m_RRSE  = evaluation.rootRelativeSquaredError();
-      m_MAE   = evaluation.meanAbsoluteError();
-      m_RAE   = evaluation.relativeAbsoluteError();
-      m_CC    = evaluation.correlationCoefficient();
-      m_ACC   = evaluation.accuracy();
-      m_Kappa = evaluation.kappa();
-    }
-    else {
-      m_RMSE  = Double.MAX_VALUE;
-      m_RRSE  = Double.MAX_VALUE;
-      m_MAE   = Double.MAX_VALUE;
-      m_RAE   = Double.MAX_VALUE;
-      m_CC    = Double.MIN_VALUE;
-      m_ACC   = Double.MIN_VALUE;
-      m_Kappa = Double.MIN_VALUE;
+      m_Metrics = evaluation.getMetrics();
+      for (Tag tag : evaluation.getMetrics().getTags()) {
+        m_MetricValues.put(tag.getID(), evaluation.getMetric(tag));
+      }
     }
   }
 
@@ -132,7 +82,6 @@ public class Performance
    * Returns the evaluation type.
    *
    * @return		the type of evaluation
-   * @see		MultiSearch#TAGS_EVALUATION
    */
   public int getEvaluation() {
     return m_Evaluation;
@@ -154,33 +103,9 @@ public class Performance
    * @param value 	the performance measure
    */
   public void setPerformance(int evaluation, double value) {
-    switch (evaluation) {
-      case EVALUATION_CC:
-        m_CC = value;
-        break;
-      case EVALUATION_RMSE:
-        m_RMSE = value;
-        break;
-      case EVALUATION_RRSE:
-        m_RRSE = value;
-        break;
-      case EVALUATION_MAE:
-        m_MAE = value;
-        break;
-      case EVALUATION_RAE:
-        m_RAE = value;
-        break;
-      case EVALUATION_COMBINED:
-        break;
-      case EVALUATION_ACC:
-        m_ACC = value;
-        break;
-      case EVALUATION_KAPPA:
-        m_Kappa = value;
-        break;
-      default:
-        throw new IllegalArgumentException("Evaluation type '" + evaluation + "' not supported!");
-    }
+    if ((m_Metrics != null) && !m_Metrics.check(evaluation))
+      return;
+    m_MetricValues.put(evaluation, value);
   }
 
   /**
@@ -190,40 +115,13 @@ public class Performance
    * @return 			the performance measure
    */
   public double getPerformance(int evaluation) {
-    double	result;
+    if ((m_Metrics != null) && !m_Metrics.check(evaluation))
+      return Double.NaN;
 
-    result = Double.NaN;
+    if (!m_MetricValues.containsKey(evaluation))
+      return Double.NaN;
 
-    switch (evaluation) {
-      case EVALUATION_CC:
-        result = m_CC;
-        break;
-      case EVALUATION_RMSE:
-        result = m_RMSE;
-        break;
-      case EVALUATION_RRSE:
-        result = m_RRSE;
-        break;
-      case EVALUATION_MAE:
-        result = m_MAE;
-        break;
-      case EVALUATION_RAE:
-        result = m_RAE;
-        break;
-      case EVALUATION_COMBINED:
-        result = (1 - StrictMath.abs(m_CC)) + m_RRSE + m_RAE;
-        break;
-      case EVALUATION_ACC:
-        result = m_ACC;
-        break;
-      case EVALUATION_KAPPA:
-        result = m_Kappa;
-        break;
-      default:
-        throw new IllegalArgumentException("Evaluation type '" + evaluation + "' not supported!");
-    }
-
-    return result;
+    return m_MetricValues.get(evaluation);
   }
 
   /**
@@ -243,19 +141,23 @@ public class Performance
   @Override
   public String toString() {
     String	result;
+    String	evalStr;
+
+    evalStr = null;
+    if (m_Metrics != null) {
+      for (Tag tag: m_Metrics.getTags()) {
+	if (tag.getID() == m_Evaluation) {
+	  evalStr = tag.getIDStr();
+	  break;
+	}
+      }
+    }
+    if (evalStr == null)
+      evalStr = "" + m_Evaluation;
 
     result = "Performance (" + getValues() + "): ";
     result +=   getPerformance()
-              + " (" + new SelectedTag(m_Evaluation, MultiSearch.TAGS_EVALUATION) + ")";
-
-    if (m_Evaluation == Performance.EVALUATION_COMBINED) {
-      result +=   ", " + getPerformance(Performance.EVALUATION_CC)
-                + " (" + new SelectedTag(Performance.EVALUATION_CC, MultiSearch.TAGS_EVALUATION) + ")";
-      result +=   ", " + getPerformance(Performance.EVALUATION_RRSE)
-                + " (" + new SelectedTag(Performance.EVALUATION_RRSE, MultiSearch.TAGS_EVALUATION) + ")";
-      result +=   ", " + getPerformance(Performance.EVALUATION_RAE)
-                + " (" + new SelectedTag(Performance.EVALUATION_RAE, MultiSearch.TAGS_EVALUATION) + ")";
-    }
+              + " (" + evalStr + ")";
 
     return result;
   }

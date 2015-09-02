@@ -24,6 +24,8 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.RandomizableSingleClassifierEnhancer;
 import weka.classifiers.functions.LinearRegression;
+import weka.classifiers.meta.multisearch.AbstractEvaluationMetrics;
+import weka.classifiers.meta.multisearch.DefaultEvaluationMetrics;
 import weka.classifiers.meta.multisearch.DefaultEvaluationTask;
 import weka.classifiers.meta.multisearch.Performance;
 import weka.classifiers.meta.multisearch.PerformanceCache;
@@ -197,26 +199,17 @@ public class MultiSearch
   /** for serialization. */
   private static final long serialVersionUID = -5129316523575906233L;
 
-  /** evaluation. */
-  public static final Tag[] TAGS_EVALUATION = {
-    new Tag(Performance.EVALUATION_CC, "CC", "Correlation coefficient"),
-    new Tag(Performance.EVALUATION_RMSE, "RMSE", "Root mean squared error"),
-    new Tag(Performance.EVALUATION_RRSE, "RRSE", "Root relative squared error"),
-    new Tag(Performance.EVALUATION_MAE, "MAE", "Mean absolute error"),
-    new Tag(Performance.EVALUATION_RAE, "RAE", "Root absolute error"),
-    new Tag(Performance.EVALUATION_COMBINED, "COMB", "Combined = (1-abs(CC)) + RRSE + RAE"),
-    new Tag(Performance.EVALUATION_ACC, "ACC", "Accuracy"),
-    new Tag(Performance.EVALUATION_KAPPA, "KAP", "Kappa")
-  };
-
   /** the Classifier with the best setup. */
   protected Classifier m_BestClassifier;
 
   /** the best values. */
   protected Point<Object> m_Values = null;
 
+  /** the metrics to use. */
+  protected AbstractEvaluationMetrics m_Metrics;
+
   /** the type of evaluation. */
-  protected int m_Evaluation = Performance.EVALUATION_CC;
+  protected int m_Evaluation;
 
   /** for generating the search parameters. */
   protected SetupGenerator m_Generator;
@@ -274,7 +267,10 @@ public class MultiSearch
   public MultiSearch() {
     super();
 
-    m_Generator = new SetupGenerator();
+    m_Generator  = new SetupGenerator();
+
+    m_Metrics    = newMetrics();
+    m_Evaluation = m_Metrics.getDefaultMetric();
 
     // classifier
     LinearRegression classifier = new LinearRegression();
@@ -391,8 +387,8 @@ public class MultiSearch
     result = new Vector();
 
     desc  = "";
-    for (i = 0; i < TAGS_EVALUATION.length; i++) {
-      tag = new SelectedTag(TAGS_EVALUATION[i].getID(), TAGS_EVALUATION);
+    for (i = 0; i < m_Metrics.getTags().length; i++) {
+      tag = new SelectedTag(m_Metrics.getTags()[i].getID(), m_Metrics.getTags());
       desc  +=   "\t" + tag.getSelectedTag().getIDStr()
 	+ " = " + tag.getSelectedTag().getReadable()
 	+ "\n";
@@ -400,8 +396,8 @@ public class MultiSearch
     result.addElement(new Option(
       "\tDetermines the parameter used for evaluation:\n"
 	+ desc
-	+ "\t(default: " + new SelectedTag(Performance.EVALUATION_CC, TAGS_EVALUATION) + ")",
-      "E", 1, "-E " + Tag.toOptionList(TAGS_EVALUATION)));
+	+ "\t(default: " + new SelectedTag(m_Metrics.getDefaultMetric(), m_Metrics.getTags()) + ")",
+      "E", 1, "-E " + Tag.toOptionList(m_Metrics.getTags())));
 
     result.addElement(new Option(
       "\tA property search setup.\n",
@@ -596,9 +592,9 @@ public class MultiSearch
 
     tmpStr = Utils.getOption('E', options);
     if (tmpStr.length() != 0)
-      setEvaluation(new SelectedTag(tmpStr, TAGS_EVALUATION));
+      setEvaluation(new SelectedTag(tmpStr, m_Metrics.getTags()));
     else
-      setEvaluation(new SelectedTag(Performance.EVALUATION_CC, TAGS_EVALUATION));
+      setEvaluation(new SelectedTag(m_Metrics.getDefaultMetric(), m_Metrics.getTags()));
 
     search = new Vector<String>();
     do {
@@ -675,14 +671,6 @@ public class MultiSearch
       || cap.handles(Capability.UNARY_CLASS)
       || cap.hasDependency(Capability.UNARY_CLASS);
 
-    if ((m_Evaluation == Performance.EVALUATION_CC) && !numeric)
-      throw new IllegalArgumentException(
-	"Classifier needs to handle numeric class for chosen type of evaluation!");
-
-    if (((m_Evaluation == Performance.EVALUATION_ACC) || (m_Evaluation == Performance.EVALUATION_KAPPA)) && !nominal)
-      throw new IllegalArgumentException(
-	"Classifier needs to handle nominal class for chosen type of evaluation!");
-
     super.setClassifier(newClassifier);
 
     try {
@@ -739,7 +727,7 @@ public class MultiSearch
    * @param value 	.the evaluation criterion
    */
   public void setEvaluation(SelectedTag value) {
-    if (value.getTags() == TAGS_EVALUATION) {
+    if (value.getTags() == m_Metrics.getTags()) {
       m_Evaluation = value.getSelectedTag().getID();
     }
   }
@@ -750,7 +738,7 @@ public class MultiSearch
    * @return 		the current evaluation criterion.
    */
   public SelectedTag getEvaluation() {
-    return new SelectedTag(m_Evaluation, TAGS_EVALUATION);
+    return new SelectedTag(m_Evaluation, m_Metrics.getTags());
   }
 
   /**
@@ -945,6 +933,15 @@ public class MultiSearch
   }
 
   /**
+   * Returns the metrics to use.
+   *
+   * @return		the metrics
+   */
+  protected AbstractEvaluationMetrics newMetrics() {
+    return new DefaultEvaluationMetrics();
+  }
+
+  /**
    * returns the parameter values that were found to work best.
    *
    * @return		the best parameter combination
@@ -1106,8 +1103,8 @@ public class MultiSearch
   protected void logPerformances(Space space, Vector<Performance> performances) {
     int		i;
 
-    for (i = 0; i < TAGS_EVALUATION.length; i++)
-      log("\n" + logPerformances(space, performances, TAGS_EVALUATION[i]), true);
+    for (i = 0; i < m_Metrics.getTags().length; i++)
+      log("\n" + logPerformances(space, performances, m_Metrics.getTags()[i]), true);
   }
 
   /**
@@ -1280,7 +1277,7 @@ public class MultiSearch
       throw new WekaException("Failed to evaluate " + m_Failed + " setups!");
 
     // sort list
-    Collections.sort(m_Performances, new PerformanceComparator(m_Evaluation));
+    Collections.sort(m_Performances, new PerformanceComparator(m_Evaluation, m_Metrics));
 
     result = m_Performances.lastElement().getValues();
 

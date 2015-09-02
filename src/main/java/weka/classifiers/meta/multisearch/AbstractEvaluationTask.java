@@ -47,7 +47,7 @@ public abstract class AbstractEvaluationTask
   protected int m_Folds;
 
   /** the type of evaluation. */
-  protected int m_Evaluation = Performance.EVALUATION_CC;
+  protected int m_Evaluation;
 
   /**
    * Initializes the task.
