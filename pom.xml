@@ -5,7 +5,7 @@
 
   <groupId>com.github.fracpete</groupId>
   <artifactId>multisearch-weka-package</artifactId>
-  <version>2015.9.2-SNAPSHOT</version>
+  <version>2015.9.2</version>
   <packaging>jar</packaging>
 
   <name>multisearch</name>
@@ -278,6 +278,8 @@
           <subpackages>weka:org</subpackages>
           <show>public</show>
           <outputDirectory>${project.basedir}/doc</outputDirectory>
+          <!-- when using Java 8, use this setting to avoid overly strict javadoclet -->
+          <additionalparam>-Xdoclint:none</additionalparam>
         </configuration>
         <executions>
           <execution>
