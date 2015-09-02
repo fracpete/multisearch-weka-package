@@ -271,43 +271,20 @@ public class MultiSearch
   public MultiSearch() {
     super();
 
-    m_Generator  = new SetupGenerator();
-    m_Factory    = newFactory();
-    m_Metrics    = m_Factory.newMetrics();
-    m_Evaluation = m_Metrics.getDefaultMetric();
-
-    // classifier
-    LinearRegression classifier = new LinearRegression();
-    classifier.setAttributeSelectionMethod(new SelectedTag(LinearRegression.SELECTION_NONE, LinearRegression.TAGS_SELECTION));
-    classifier.setEliminateColinearAttributes(false);
-    m_Classifier = classifier;
-
-    // search parameters
-    AbstractParameter[] params = new AbstractParameter[1];
-
-    MathParameter param = new MathParameter();
-    param.setProperty("classifier.ridge");
-    param.setMin(-10);
-    param.setMax(+5);
-    param.setStep(1);
-    param.setBase(10);
-    param.setExpression("pow(BASE,I)");
-    params[0] = param;
-
-    try {
-      m_DefaultParameters = (AbstractParameter[]) new SerializedObject(params).getObject();
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-
+    m_Generator         = new SetupGenerator();
+    m_Factory           = newFactory();
+    m_Metrics           = m_Factory.newMetrics();
+    m_Evaluation        = m_Metrics.getDefaultMetric();
+    m_Classifier        = defaultClassifier();
+    m_DefaultParameters = defaultSearchParameters();
     m_Generator.setBaseObject(this);
-    m_Generator.setParameters(params);
+    m_Generator.setParameters(m_DefaultParameters);
 
     try {
       m_BestClassifier = AbstractClassifier.makeCopy(m_Classifier);
     }
     catch (Exception e) {
+      System.err.println("Failed to create copy of default classifier!");
       e.printStackTrace();
     }
   }
@@ -372,7 +349,54 @@ public class MultiSearch
    */
   @Override
   protected String defaultClassifierString() {
-    return FilteredClassifier.class.getName();
+    return defaultClassifier().getClass().getName();
+  }
+
+  /**
+   * Returns the default classifier to use.
+   *
+   * @return		the default classifier
+   */
+  protected Classifier defaultClassifier() {
+    LinearRegression 	result;
+
+    result = new LinearRegression();
+    result.setAttributeSelectionMethod(new SelectedTag(LinearRegression.SELECTION_NONE, LinearRegression.TAGS_SELECTION));
+    result.setEliminateColinearAttributes(false);
+
+    return result;
+  }
+
+  /**
+   * Returns the default search parameters.
+   *
+   * @return		the parameters
+   */
+  protected AbstractParameter[] defaultSearchParameters() {
+    AbstractParameter[] 	result;
+    MathParameter 		param;
+
+    result = new AbstractParameter[1];
+
+    param = new MathParameter();
+    param.setProperty("classifier.ridge");
+    param.setMin(-10);
+    param.setMax(+5);
+    param.setStep(1);
+    param.setBase(10);
+    param.setExpression("pow(BASE,I)");
+    result[0] = param;
+
+    try {
+      result = (AbstractParameter[]) new SerializedObject(result).getObject();
+    }
+    catch (Exception e) {
+      result = new AbstractParameter[0];
+      System.err.println("Failed to create copy of default parameters!");
+      e.printStackTrace();
+    }
+
+    return result;
   }
 
   /**
@@ -660,23 +684,7 @@ public class MultiSearch
    */
   @Override
   public void setClassifier(Classifier newClassifier) {
-    boolean	numeric;
-    boolean	nominal;
-
-    Capabilities cap = newClassifier.getCapabilities();
-
-    numeric =    cap.handles(Capability.NUMERIC_CLASS)
-      || cap.hasDependency(Capability.NUMERIC_CLASS);
-
-    nominal =    cap.handles(Capability.NOMINAL_CLASS)
-      || cap.hasDependency(Capability.NOMINAL_CLASS)
-      || cap.handles(Capability.BINARY_CLASS)
-      || cap.hasDependency(Capability.BINARY_CLASS)
-      || cap.handles(Capability.UNARY_CLASS)
-      || cap.hasDependency(Capability.UNARY_CLASS);
-
     super.setClassifier(newClassifier);
-
     try {
       m_BestClassifier = AbstractClassifier.makeCopy(m_Classifier);
     }
@@ -1334,7 +1342,6 @@ public class MultiSearch
       sample = Filter.useFilter(inst, resample);
     }
 
-    finished             = false;
     iteration            = 0;
     m_UniformPerformance = false;
 
