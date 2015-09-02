@@ -1277,7 +1277,7 @@ public class MultiSearch
     // sort list
     Collections.sort(m_Performances, new PerformanceComparator(m_Evaluation, m_Metrics));
 
-    result = m_Performances.lastElement().getValues();
+    result = m_Performances.firstElement().getValues();
 
     // check whether all performances are the same
     m_UniformPerformance = true;
