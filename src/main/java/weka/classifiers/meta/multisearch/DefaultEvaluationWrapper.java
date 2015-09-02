@@ -41,18 +41,8 @@ public class DefaultEvaluationWrapper
    *
    * @param eval the evaluation to wrap
    */
-  public DefaultEvaluationWrapper(Evaluation eval) {
-    super(eval);
-  }
-
-  /**
-   * Returns the metrics to use.
-   *
-   * @return		the metrics
-   */
-  @Override
-  protected DefaultEvaluationMetrics newMetrics() {
-    return new DefaultEvaluationMetrics();
+  public DefaultEvaluationWrapper(Evaluation eval, DefaultEvaluationMetrics metrics) {
+    super(eval, metrics);
   }
 
   /**

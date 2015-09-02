@@ -45,17 +45,10 @@ public abstract class AbstractEvaluationWrapper<T, M extends AbstractEvaluationM
    *
    * @param eval	the evaluation to wrap
    */
-  public AbstractEvaluationWrapper(T eval) {
-    m_Metrics = newMetrics();
+  public AbstractEvaluationWrapper(T eval, M metrics) {
+    m_Metrics = metrics;
     setEvaluation(eval);
   }
-
-  /**
-   * Returns the metrics to use.
-   *
-   * @return		the metrics
-   */
-  protected abstract M newMetrics();
 
   /**
    * Sets the evaluation object to use.

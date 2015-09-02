@@ -55,7 +55,7 @@ public class DefaultEvaluationFactory
    */
   @Override
   public DefaultEvaluationWrapper newWrapper(Evaluation eval) {
-    return new DefaultEvaluationWrapper(eval);
+    return new DefaultEvaluationWrapper(eval, newMetrics());
   }
 
   /**

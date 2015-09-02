@@ -946,6 +946,15 @@ public class MultiSearch
   }
 
   /**
+   * Returns the factory instance.
+   *
+   * @return		the factory
+   */
+  public AbstractEvaluationFactory getFactory() {
+    return m_Factory;
+  }
+
+  /**
    * returns the parameter values that were found to work best.
    *
    * @return		the best parameter combination

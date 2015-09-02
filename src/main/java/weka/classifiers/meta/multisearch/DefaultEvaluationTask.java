@@ -91,7 +91,7 @@ public class DefaultEvaluationTask
     }
 
     // store performance
-    performance = new Performance(m_Values, new DefaultEvaluationWrapper(eval), m_Evaluation);
+    performance = new Performance(m_Values, m_Owner.getFactory().newWrapper(eval), m_Evaluation);
     m_Owner.addPerformance(performance, m_Folds);
 
     // log
