@@ -24,9 +24,10 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.RandomizableSingleClassifierEnhancer;
 import weka.classifiers.functions.LinearRegression;
+import weka.classifiers.meta.multisearch.AbstractEvaluationFactory;
 import weka.classifiers.meta.multisearch.AbstractEvaluationMetrics;
-import weka.classifiers.meta.multisearch.DefaultEvaluationMetrics;
-import weka.classifiers.meta.multisearch.DefaultEvaluationTask;
+import weka.classifiers.meta.multisearch.AbstractEvaluationTask;
+import weka.classifiers.meta.multisearch.DefaultEvaluationFactory;
 import weka.classifiers.meta.multisearch.Performance;
 import weka.classifiers.meta.multisearch.PerformanceCache;
 import weka.classifiers.meta.multisearch.PerformanceComparator;
@@ -205,6 +206,9 @@ public class MultiSearch
   /** the best values. */
   protected Point<Object> m_Values = null;
 
+  /** the evaluation factory to use. */
+  protected AbstractEvaluationFactory m_Factory;
+
   /** the metrics to use. */
   protected AbstractEvaluationMetrics m_Metrics;
 
@@ -268,8 +272,8 @@ public class MultiSearch
     super();
 
     m_Generator  = new SetupGenerator();
-
-    m_Metrics    = newMetrics();
+    m_Factory    = newFactory();
+    m_Metrics    = m_Factory.newMetrics();
     m_Evaluation = m_Metrics.getDefaultMetric();
 
     // classifier
@@ -933,12 +937,12 @@ public class MultiSearch
   }
 
   /**
-   * Returns the metrics to use.
+   * Returns the evaluation factory to use.
    *
-   * @return		the metrics
+   * @return		the factory
    */
-  protected AbstractEvaluationMetrics newMetrics() {
-    return new DefaultEvaluationMetrics();
+  protected AbstractEvaluationFactory newFactory() {
+    return new DefaultEvaluationFactory();
   }
 
   /**
@@ -1198,21 +1202,6 @@ public class MultiSearch
   }
 
   /**
-   * Creates a new evaluation task object.
-   *
-   * @param owner	the owner
-   * @param inst	the data
-   * @param generator	the setup generator
-   * @param values	the values
-   * @param folds	the number of folds
-   * @param evaluation	the type of evaluation
-   * @return		the task
-   */
-  protected DefaultEvaluationTask newEvaluationTask(MultiSearch owner, Instances inst, SetupGenerator generator, Point<Object >values, int folds, int evaluation) {
-    return new DefaultEvaluationTask(owner, inst, generator, values, folds, evaluation);
-  }
-
-  /**
    * determines the best point for the given space, using CV with
    * specified number of folds.
    *
@@ -1232,7 +1221,7 @@ public class MultiSearch
     boolean			allCached;
     Performance			p1;
     Performance			p2;
-    DefaultEvaluationTask newTask;
+    AbstractEvaluationTask 	newTask;
 
     m_Performances.clear();
 
@@ -1259,7 +1248,7 @@ public class MultiSearch
       }
       else {
 	allCached = false;
-	newTask   = newEvaluationTask(this, inst, m_Generator, values, folds, m_Evaluation);
+	newTask   = m_Factory.newTask(this, inst, m_Generator, values, folds, m_Evaluation);
 	m_ExecutorPool.execute(newTask);
       }
     }
