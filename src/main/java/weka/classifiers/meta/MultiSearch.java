@@ -65,34 +65,34 @@ import java.util.concurrent.TimeUnit;
 
 /**
  <!-- globalinfo-start -->
- * Performs a search of an arbitrary number of parameters of a classifier and chooses the best pair found for the actual filtering and training.<br/>
- * The default MultiSearch is using the following FilteredClassifier setup:<br/>
- *  - classifier: LinearRegression, searching for the "Ridge"<br/>
- *  - filter: PLSFilter, searching for the "# of Components"<br/>
- * The properties being explored are totally up to the user, it can be a mix of classifier and filter properties, or only classifier ones or only filter ones.<br/>
- * <br/>
- * Since the the MultiSearch classifier itself is used as the base object for the setups being generated, one has to prefix the properties with 'classifier.' (referring to MultiSearch's 'classifier' property).<br/>
- * E.g., if you have a FilteredClassifier selected as base classifier, sporting a PLSFilter and you want to explore the number of PLS components, then your property will be made up of the following components:<br/>
- *  - classifier: referring to MultiSearch's classifier property<br/>
- *    i.e., the FilteredClassifier.<br/>
- *  - filter: referring to the FilteredClassifier's property (= PLSFilter)<br/>
- *  - numComponents: the actual property of the PLSFilter that we want to modify<br/>
- * And assembled, the property looks like this:<br/>
- *   classifier.filter.numComponents<br/>
- * <br/>
- * The initial space is worked on with 2-fold CV to determine the values of the parameters for the selected type of evaluation (e.g., accuracy). The best point in the space is then taken as center and a 10-fold CV is performed with the adjacent parameters. If better parameters are found, then this will act as new center and another 10-fold CV will be performed (kind of hill-climbing). This process is repeated until no better pair is found or the best pair is on the border of the parameter space.<br/>
- * The number of CV-folds for the initial and subsequent spaces can be adjusted, of course.<br/>
- * <br/>
- * The outcome of a mathematical function (= double), MultiSearch will convert to integers (values are just cast to int), booleans (0 is false, otherwise true), float, char and long if necessary.<br/>
- * Via a user-supplied 'list' of parameters (blank-separated), one can also set strings and selected tags (drop-down comboboxes in Weka's GenericObjectEditor). Classnames with options (e.g., classifiers with their options) are possible as well.<br/>
- * <br/>
+ * Performs a search of an arbitrary number of parameters of a classifier and chooses the best pair found for the actual filtering and training.<br>
+ * The default MultiSearch is using the following FilteredClassifier setup:<br>
+ *  - classifier: LinearRegression, searching for the "Ridge"<br>
+ *  - filter: PLSFilter, searching for the "# of Components"<br>
+ * The properties being explored are totally up to the user, it can be a mix of classifier and filter properties, or only classifier ones or only filter ones.<br>
+ * <br>
+ * Since the the MultiSearch classifier itself is used as the base object for the setups being generated, one has to prefix the properties with 'classifier.' (referring to MultiSearch's 'classifier' property).<br>
+ * E.g., if you have a FilteredClassifier selected as base classifier, sporting a PLSFilter and you want to explore the number of PLS components, then your property will be made up of the following components:<br>
+ *  - classifier: referring to MultiSearch's classifier property<br>
+ *    i.e., the FilteredClassifier.<br>
+ *  - filter: referring to the FilteredClassifier's property (= PLSFilter)<br>
+ *  - numComponents: the actual property of the PLSFilter that we want to modify<br>
+ * And assembled, the property looks like this:<br>
+ *   classifier.filter.numComponents<br>
+ * <br>
+ * The initial space is worked on with 2-fold CV to determine the values of the parameters for the selected type of evaluation (e.g., accuracy). The best point in the space is then taken as center and a 10-fold CV is performed with the adjacent parameters. If better parameters are found, then this will act as new center and another 10-fold CV will be performed (kind of hill-climbing). This process is repeated until no better pair is found or the best pair is on the border of the parameter space.<br>
+ * The number of CV-folds for the initial and subsequent spaces can be adjusted, of course.<br>
+ * <br>
+ * The outcome of a mathematical function (= double), MultiSearch will convert to integers (values are just cast to int), booleans (0 is false, otherwise true), float, char and long if necessary.<br>
+ * Via a user-supplied 'list' of parameters (blank-separated), one can also set strings and selected tags (drop-down comboboxes in Weka's GenericObjectEditor). Classnames with options (e.g., classifiers with their options) are possible as well.<br>
+ * <br>
  * The best classifier setup can be accessed after the buildClassifier call via the getBestClassifier method.
- * <p/>
+ * <br><br>
  <!-- globalinfo-end -->
  *
  <!-- options-start -->
- * Valid options are: <p/>
- *
+ * Valid options are: <p>
+ * 
  * <pre> -E &lt;CC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP&gt;
  *  Determines the parameter used for evaluation:
  *  CC = Correlation coefficient
@@ -104,84 +104,92 @@ import java.util.concurrent.TimeUnit;
  *  ACC = Accuracy
  *  KAP = Kappa
  *  (default: CC)</pre>
- *
+ * 
  * <pre> -search "&lt;classname options&gt;"
  *  A property search setup.
  * </pre>
- *
+ * 
  * <pre> -sample-size &lt;num&gt;
  *  The size (in percent) of the sample to search the inital space with.
  *  (default: 100)</pre>
- *
+ * 
  * <pre> -log-file &lt;filename&gt;
  *  The log file to log the messages to.
  *  (default: none)</pre>
- *
+ * 
  * <pre> -initial-folds &lt;num&gt;
  *  The number of cross-validation folds for the initial space.
  *  Numbers smaller than 2 turn off cross-validation and just
  *  perform evaluation on the training set.
  *  (default: 2)</pre>
- *
+ * 
  * <pre> -subsequent-folds &lt;num&gt;
  *  The number of cross-validation folds for the subsequent sub-spaces.
  *  Numbers smaller than 2 turn off cross-validation and just
  *  perform evaluation on the training set.
  *  (default: 10)</pre>
- *
+ * 
  * <pre> -num-slots &lt;num&gt;
  *  Number of execution slots.
  *  (default 1 - i.e. no parallelism)</pre>
- *
+ * 
  * <pre> -S &lt;num&gt;
  *  Random number seed.
  *  (default 1)</pre>
- *
- * <pre> -D
- *  If set, classifier is run in debug mode and
- *  may output additional info to the console</pre>
- *
+ * 
  * <pre> -W
  *  Full name of base classifier.
- *  (default: weka.classifiers.meta.FilteredClassifier)</pre>
- *
- * <pre>
- * Options specific to classifier weka.classifiers.meta.FilteredClassifier:
- * </pre>
- *
- * <pre> -F &lt;filter specification&gt;
- *  Full class name of filter to use, followed
- *  by filter options.
- *  eg: "weka.filters.unsupervised.attribute.Remove -V -R 1,2"</pre>
- *
- * <pre> -D
+ *  (default: weka.classifiers.functions.LinearRegression)</pre>
+ * 
+ * <pre> -output-debug-info
  *  If set, classifier is run in debug mode and
  *  may output additional info to the console</pre>
- *
- * <pre> -W
- *  Full name of base classifier.
- *  (default: weka.classifiers.trees.J48)</pre>
- *
- * <pre>
+ * 
+ * <pre> -do-not-check-capabilities
+ *  If set, classifier capabilities are not checked before classifier is built
+ *  (use with caution).</pre>
+ * 
+ * <pre> -num-decimal-places
+ *  The number of decimal places for the output of numbers in the model (default 2).</pre>
+ * 
+ * <pre> 
  * Options specific to classifier weka.classifiers.functions.LinearRegression:
  * </pre>
- *
- * <pre> -D
- *  Produce debugging output.
- *  (default no debugging output)</pre>
- *
+ * 
  * <pre> -S &lt;number of selection method&gt;
  *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
  *  (default 0 = M5' method)</pre>
- *
+ * 
  * <pre> -C
  *  Do not try to eliminate colinear attributes.
  * </pre>
- *
+ * 
+ * <pre> -S &lt;number of selection method&gt;
+ *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
+ *  (default 0 = M5' method)</pre>
+ * 
  * <pre> -R &lt;double&gt;
  *  Set ridge parameter (default 1.0e-8).
  * </pre>
- *
+ * 
+ * <pre> -minimal
+ *  Conserve memory, don't keep dataset header and means/stdevs.
+ *  Model cannot be printed out if this option is enabled. (default: keep data)</pre>
+ * 
+ * <pre> -additional-stats
+ *  Output additional statistics.</pre>
+ * 
+ * <pre> -output-debug-info
+ *  If set, classifier is run in debug mode and
+ *  may output additional info to the console</pre>
+ * 
+ * <pre> -do-not-check-capabilities
+ *  If set, classifier capabilities are not checked before classifier is built
+ *  (use with caution).</pre>
+ * 
+ * <pre> -num-decimal-places
+ *  The number of decimal places for the output of numbers in the model (default 4).</pre>
+ * 
  <!-- options-end -->
  *
  * General notes:
@@ -514,8 +522,8 @@ public class MultiSearch
    * Parses the options for this object. <p/>
    *
    <!-- options-start -->
-   * Valid options are: <p/>
-   *
+   * Valid options are: <p>
+   * 
    * <pre> -E &lt;CC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP&gt;
    *  Determines the parameter used for evaluation:
    *  CC = Correlation coefficient
@@ -527,84 +535,92 @@ public class MultiSearch
    *  ACC = Accuracy
    *  KAP = Kappa
    *  (default: CC)</pre>
-   *
+   * 
    * <pre> -search "&lt;classname options&gt;"
    *  A property search setup.
    * </pre>
-   *
+   * 
    * <pre> -sample-size &lt;num&gt;
    *  The size (in percent) of the sample to search the inital space with.
    *  (default: 100)</pre>
-   *
+   * 
    * <pre> -log-file &lt;filename&gt;
    *  The log file to log the messages to.
    *  (default: none)</pre>
-   *
+   * 
    * <pre> -initial-folds &lt;num&gt;
    *  The number of cross-validation folds for the initial space.
    *  Numbers smaller than 2 turn off cross-validation and just
    *  perform evaluation on the training set.
    *  (default: 2)</pre>
-   *
+   * 
    * <pre> -subsequent-folds &lt;num&gt;
    *  The number of cross-validation folds for the subsequent sub-spaces.
    *  Numbers smaller than 2 turn off cross-validation and just
    *  perform evaluation on the training set.
    *  (default: 10)</pre>
-   *
+   * 
    * <pre> -num-slots &lt;num&gt;
    *  Number of execution slots.
    *  (default 1 - i.e. no parallelism)</pre>
-   *
+   * 
    * <pre> -S &lt;num&gt;
    *  Random number seed.
    *  (default 1)</pre>
-   *
-   * <pre> -D
-   *  If set, classifier is run in debug mode and
-   *  may output additional info to the console</pre>
-   *
+   * 
    * <pre> -W
    *  Full name of base classifier.
-   *  (default: weka.classifiers.meta.FilteredClassifier)</pre>
-   *
-   * <pre>
-   * Options specific to classifier weka.classifiers.meta.FilteredClassifier:
-   * </pre>
-   *
-   * <pre> -F &lt;filter specification&gt;
-   *  Full class name of filter to use, followed
-   *  by filter options.
-   *  eg: "weka.filters.unsupervised.attribute.Remove -V -R 1,2"</pre>
-   *
-   * <pre> -D
+   *  (default: weka.classifiers.functions.LinearRegression)</pre>
+   * 
+   * <pre> -output-debug-info
    *  If set, classifier is run in debug mode and
    *  may output additional info to the console</pre>
-   *
-   * <pre> -W
-   *  Full name of base classifier.
-   *  (default: weka.classifiers.trees.J48)</pre>
-   *
-   * <pre>
+   * 
+   * <pre> -do-not-check-capabilities
+   *  If set, classifier capabilities are not checked before classifier is built
+   *  (use with caution).</pre>
+   * 
+   * <pre> -num-decimal-places
+   *  The number of decimal places for the output of numbers in the model (default 2).</pre>
+   * 
+   * <pre> 
    * Options specific to classifier weka.classifiers.functions.LinearRegression:
    * </pre>
-   *
-   * <pre> -D
-   *  Produce debugging output.
-   *  (default no debugging output)</pre>
-   *
+   * 
    * <pre> -S &lt;number of selection method&gt;
    *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
    *  (default 0 = M5' method)</pre>
-   *
+   * 
    * <pre> -C
    *  Do not try to eliminate colinear attributes.
    * </pre>
-   *
+   * 
+   * <pre> -S &lt;number of selection method&gt;
+   *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
+   *  (default 0 = M5' method)</pre>
+   * 
    * <pre> -R &lt;double&gt;
    *  Set ridge parameter (default 1.0e-8).
    * </pre>
-   *
+   * 
+   * <pre> -minimal
+   *  Conserve memory, don't keep dataset header and means/stdevs.
+   *  Model cannot be printed out if this option is enabled. (default: keep data)</pre>
+   * 
+   * <pre> -additional-stats
+   *  Output additional statistics.</pre>
+   * 
+   * <pre> -output-debug-info
+   *  If set, classifier is run in debug mode and
+   *  may output additional info to the console</pre>
+   * 
+   * <pre> -do-not-check-capabilities
+   *  If set, classifier capabilities are not checked before classifier is built
+   *  (use with caution).</pre>
+   * 
+   * <pre> -num-decimal-places
+   *  The number of decimal places for the output of numbers in the model (default 4).</pre>
+   * 
    <!-- options-end -->
    *
    * @param options	the options to use
@@ -923,9 +939,11 @@ public class MultiSearch
 
     result = new Vector();
 
-    for (i = 0; i < m_Values.dimensions(); i++) {
-      if (m_Values.getValue(i) instanceof Double)
-	result.add("measure-" + i);
+    if (m_Values != null) {
+      for (i = 0; i < m_Values.dimensions(); i++) {
+        if (m_Values.getValue(i) instanceof Double)
+          result.add("measure-" + i);
+      }
     }
 
     return result.elements();

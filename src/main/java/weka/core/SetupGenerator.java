@@ -15,25 +15,34 @@
 
 /*
  * SetupGenerator.java
- * Copyright (C) 2008-2014 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core;
 
-import java.beans.PropertyDescriptor;
-import java.io.Serializable;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Vector;
-
 import weka.core.PropertyPath.Path;
 import weka.core.PropertyPath.PropertyContainer;
+import weka.core.expressionlanguage.common.IfElseMacro;
+import weka.core.expressionlanguage.common.JavaMacro;
+import weka.core.expressionlanguage.common.MacroDeclarationsCompositor;
+import weka.core.expressionlanguage.common.MathFunctions;
+import weka.core.expressionlanguage.common.Primitives.DoubleExpression;
+import weka.core.expressionlanguage.common.SimpleVariableDeclarations;
+import weka.core.expressionlanguage.common.SimpleVariableDeclarations.VariableInitializer;
+import weka.core.expressionlanguage.common.VariableDeclarationsCompositor;
+import weka.core.expressionlanguage.core.Node;
+import weka.core.expressionlanguage.parser.Parser;
 import weka.core.setupgenerator.AbstractParameter;
 import weka.core.setupgenerator.ListParameter;
 import weka.core.setupgenerator.MathParameter;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
 import weka.core.setupgenerator.SpaceDimension;
+
+import java.beans.PropertyDescriptor;
+import java.io.Serializable;
+import java.util.Enumeration;
+import java.util.Vector;
 
 /**
  * Generates different setups of objects (e.g., classifiers or filters) based
@@ -349,15 +358,18 @@ public class SetupGenerator
    * @return		the generated value, NaN if the evaluation fails
    */
   public Point<Object> evaluate(Point<Object> values) {
-    HashMap		symbols;
-    String		expr;
-    double		base;
-    double		min;
-    double		max;
-    double		step;
-    Object		value;
-    int			i;
-    Object[]		evaluated;
+    String			expr;
+    double			base;
+    double			min;
+    double			max;
+    double			step;
+    Object			value;
+    int				i;
+    Object[]			evaluated;
+    SimpleVariableDeclarations	vars;
+    Node 			node;
+    VariableInitializer 	curVars;
+    DoubleExpression 		compiled;
 
     evaluated = new Object[values.dimensions()];
 
@@ -371,16 +383,50 @@ public class SetupGenerator
 	value = values.getValue(i);
 
 	try {
-	  symbols = new HashMap();
-	  symbols.put("BASE", new Double(base));
-	  symbols.put("FROM", new Double(min));
-	  symbols.put("TO",   new Double(max));
-	  symbols.put("STEP", new Double(step));
-	  symbols.put("I",    new Double((Double) value));
-	  evaluated[i] = MathematicalExpression.evaluate(expr, symbols);
+          vars = new SimpleVariableDeclarations();
+          vars.addDouble("BASE");
+          vars.addDouble("FROM");
+          vars.addDouble("TO");
+          vars.addDouble("STEP");
+          vars.addDouble("I");
+
+          node = Parser.parse(
+            // expression
+            expr,
+            // variables
+            new VariableDeclarationsCompositor(
+              vars
+            ),
+            // macros
+            new MacroDeclarationsCompositor(
+              new MathFunctions(),
+              new IfElseMacro(),
+              new JavaMacro()
+            )
+          );
+
+          if (!(node instanceof DoubleExpression))
+            throw new Exception("Expression must be of type double!");
+
+          curVars = vars.getInitializer();
+	  if (curVars.hasVariable("BASE"))
+	    curVars.setDouble("BASE", base);
+	  if (curVars.hasVariable("FROM"))
+	    curVars.setDouble("FROM", min);
+	  if (curVars.hasVariable("TO"))
+	    curVars.setDouble("TO", max);
+	  if (curVars.hasVariable("STEP"))
+	    curVars.setDouble("STEP", step);
+	  if (curVars.hasVariable("I"))
+	    curVars.setDouble("I", (Double) value);
+
+          compiled = (DoubleExpression) node;
+
+	  evaluated[i] = compiled.evaluate();
 	}
 	catch (Exception e) {
 	  evaluated[i] = Double.NaN;
+	  e.printStackTrace();
 	}
       }
       else if (m_Parameters[i] instanceof ListParameter) {

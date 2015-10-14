@@ -15,18 +15,17 @@
 
 /*
  * MathParameter.java
- * Copyright (C) 2008 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
 
-import java.util.Enumeration;
-import java.util.Vector;
-
-import weka.core.MathematicalExpression;
 import weka.core.Option;
 import weka.core.Utils;
 import weka.filters.unsupervised.attribute.MathExpression;
+
+import java.util.Enumeration;
+import java.util.Vector;
 
 /**
  * Container class for search parameters.
@@ -36,19 +35,19 @@ import weka.filters.unsupervised.attribute.MathExpression;
  */
 public class MathParameter
   extends AbstractParameter {
-  
+
   /** for serialization. */
   private static final long serialVersionUID = 6430400142112674316L;
 
   /** the minimum. */
   protected double m_Min = 1.0;
-  
+
   /** the maximum. */
   protected double m_Max = 5.0;
-  
+
   /** the step. */
   protected double m_Step = 1.0;
-  
+
   /** the base. */
   protected double m_Base = 10.0;
 
@@ -62,33 +61,38 @@ public class MathParameter
    *   <li>STEP</li>
    *   <li>I - the current value (from 'from' to 'to' with stepsize 'step')</li>
    * </ul>
-   * 
-   * @see MathematicalExpression
+   *
    * @see MathExpression
+   * @see weka.core.expressionlanguage.common.MathFunctions
+   * @see weka.core.expressionlanguage.common.IfElseMacro
+   * @see weka.core.expressionlanguage.common.JavaMacro
    */
   protected String m_Expression = "pow(BASE,I)";
-  
+
   /**
    * Returns a string describing the object.
-   * 
+   *
    * @return 		a description suitable for displaying in the
    *         		explorer/experimenter gui
    */
   public String globalInfo() {
-    return 
-        "Container class defining the search parameters for a particular "
-      + "property.\n"
-      + "The expression is a mathematical expression that uses the "
-      + "following variables:\n"
-      + "  BASE\n"
-      + "  FROM (= min)\n"
-      + "  TO (= max)\n"
-      + "  STEP\n"
-      + "  I - the current value (from 'from' to 'to' with stepsize 'step')\n"
-      + "For more information on the allowed mathematical operations, see "
-      + "Javadoc of class " + MathematicalExpression.class.getName() + ".";
+    return
+      "Container class defining the search parameters for a particular "
+        + "property.\n"
+        + "The expression is a mathematical expression that uses the "
+        + "following variables:\n"
+        + "  BASE\n"
+        + "  FROM (= min)\n"
+        + "  TO (= max)\n"
+        + "  STEP\n"
+        + "  I - the current value (from 'from' to 'to' with stepsize 'step')\n"
+        + "For more information on the allowed mathematical operations, see "
+        + "Javadoc of the following classes:\n "
+        + weka.core.expressionlanguage.common.MathFunctions.class.getName() + "\n"
+        + weka.core.expressionlanguage.common.IfElseMacro.class.getName() + "\n"
+        + weka.core.expressionlanguage.common.JavaMacro.class.getName() + ".";
   }
-  
+
   /**
    * Gets an enumeration describing the available options.
    *
@@ -105,27 +109,27 @@ public class MathParameter
       result.add(enm.nextElement());
 
     result.addElement(new Option(
-        "\tThe minimum.\n"
+      "\tThe minimum.\n"
         + "\t(default: -10)",
-        "min", 1, "-min <num>"));
+      "min", 1, "-min <num>"));
 
     result.addElement(new Option(
-        "\tThe maximum.\n"
+      "\tThe maximum.\n"
         + "\t(default: +5)",
-        "max", 1, "-max <num>"));
+      "max", 1, "-max <num>"));
 
     result.addElement(new Option(
-        "\tThe step size.\n"
+      "\tThe step size.\n"
         + "\t(default: 1)",
-        "step", 1, "-step <num>"));
+      "step", 1, "-step <num>"));
 
     result.addElement(new Option(
-        "\tThe base.\n"
+      "\tThe base.\n"
         + "\t(default: 10)",
-        "base", 1, "-base <num>"));
+      "base", 1, "-base <num>"));
 
     result.addElement(new Option(
-        "\tThe expression.\n"
+      "\tThe expression.\n"
         + "\tAvailable parameters:\n"
         + "\t\tBASE\n"
         + "\t\tFROM\n"
@@ -134,8 +138,8 @@ public class MathParameter
         + "\t\tI - the current iteration value\n"
         + "\t\t(from 'FROM' to 'TO' with stepsize 'STEP')\n"
         + "\t(default: 'pow(BASE,I)')",
-        "expression", 1, "-expression <expr>"));
-    
+      "expression", 1, "-expression <expr>"));
+
     return result.elements();
   }
 
@@ -154,7 +158,7 @@ public class MathParameter
     options = super.getOptions();
     for (i = 0; i < options.length; i++)
       result.add(options[i]);
-    
+
     result.add("-min");
     result.add("" + getMin());
 
@@ -170,7 +174,7 @@ public class MathParameter
     result.add("-expression");
     result.add("" + getExpression());
 
-    return result.toArray(new String[result.size()]);	  
+    return result.toArray(new String[result.size()]);
   }
 
   /**
@@ -214,10 +218,10 @@ public class MathParameter
 
     super.setOptions(options);
   }
-  
+
   /**
    * Returns the tip text for this property.
-   * 
+   *
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
@@ -233,7 +237,7 @@ public class MathParameter
   public double getMin() {
     return m_Min;
   }
-  
+
   /**
    * Set the value of the minimum.
    *
@@ -242,10 +246,10 @@ public class MathParameter
   public void setMin(double value) {
     m_Min = value;
   }
-  
+
   /**
    * Returns the tip text for this property.
-   * 
+   *
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
@@ -261,7 +265,7 @@ public class MathParameter
   public double getMax() {
     return m_Max;
   }
-  
+
   /**
    * Set the value of the Maximum.
    *
@@ -270,10 +274,10 @@ public class MathParameter
   public void setMax(double value) {
     m_Max = value;
   }
-  
+
   /**
    * Returns the tip text for this property.
-   * 
+   *
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
@@ -289,7 +293,7 @@ public class MathParameter
   public double getStep() {
     return m_Step;
   }
-  
+
   /**
    * Set the value of the step size.
    *
@@ -298,10 +302,10 @@ public class MathParameter
   public void setStep(double value) {
     m_Step = value;
   }
-  
+
   /**
    * Returns the tip text for this property.
-   * 
+   *
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
@@ -317,7 +321,7 @@ public class MathParameter
   public double getBase() {
     return m_Base;
   }
-  
+
   /**
    * Set the value of the base.
    *
@@ -326,10 +330,10 @@ public class MathParameter
   public void setBase(double value) {
     m_Base = value;
   }
-  
+
   /**
    * Returns the tip text for this property.
-   * 
+   *
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
@@ -345,7 +349,7 @@ public class MathParameter
   public String getExpression() {
     return m_Expression;
   }
-  
+
   /**
    * Set the expression.
    *
@@ -354,23 +358,23 @@ public class MathParameter
   public void setExpression(String value) {
     m_Expression = value;
   }
-  
+
   /**
    * Returns a string representation of the search parameter.
-   * 
+   *
    * @return		a string representation
    */
   public String toString() {
     String	result;
 
     result = super.toString();
-    result += 
-        ", min: " + getMin() 
-      + ", max: " + getMax() 
-      + ", step: " + getStep()
-      + ", base: " + getBase()
-      + ", expr: " + getExpression();
-    
+    result +=
+      ", min: " + getMin()
+        + ", max: " + getMax()
+        + ", step: " + getStep()
+        + ", base: " + getBase()
+        + ", expr: " + getExpression();
+
     return result;
   }
 }
