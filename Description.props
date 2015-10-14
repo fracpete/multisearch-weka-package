@@ -29,7 +29,7 @@ License=GPL 3.0
 Description=Generalized parameter optimization similar to GridSearch.
 
 # Package URL for obtaining the package archive (required)
-PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2015.10.15/multisearch-2014.12.10.zip
+PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2015.10.15/multisearch-2015.10.15.zip
 
 # URL for further information
 URL=https://github.com/fracpete/multisearch-weka-package
