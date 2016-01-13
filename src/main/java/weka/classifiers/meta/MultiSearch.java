@@ -15,7 +15,7 @@
 
 /*
  * MultiSearch.java
- * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.classifiers.meta;
@@ -1319,7 +1319,7 @@ public class MultiSearch
       log("All performances are the same!");
 
     logPerformances(space, m_Performances);
-    log("\nBest performance:\n" + m_Performances.lastElement());
+    log("\nBest performance:\n" + m_Performances.firstElement());
 
     m_Performances.clear();
 
