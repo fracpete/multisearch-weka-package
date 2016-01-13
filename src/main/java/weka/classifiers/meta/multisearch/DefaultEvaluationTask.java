@@ -15,7 +15,7 @@
 
 /**
  * DefaultEvaluationTask.java
- * Copyright (C) 2015 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2016 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -52,6 +52,19 @@ public class DefaultEvaluationTask
   }
 
   /**
+   * Returns whether predictions can be discarded (depends on selected measure).
+   */
+  protected boolean canDiscardPredictions() {
+    switch (m_Owner.getEvaluation().getSelectedTag().getID()) {
+      case DefaultEvaluationMetrics.EVALUATION_AUC:
+      case DefaultEvaluationMetrics.EVALUATION_PRC:
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  /**
    * Performs the evaluation.
    *
    * @throws Exception	if evaluation fails
@@ -72,7 +85,7 @@ public class DefaultEvaluationTask
     // evaluate
     try {
       eval = new Evaluation(m_Data);
-      eval.setDiscardPredictions(true);
+      eval.setDiscardPredictions(canDiscardPredictions());
       if (m_Folds >= 2) {
 	eval.crossValidateModel(classifier, m_Data, m_Folds, new Random(m_Owner.getSeed()));
       }

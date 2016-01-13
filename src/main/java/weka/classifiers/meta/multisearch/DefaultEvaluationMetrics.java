@@ -15,7 +15,7 @@
 
 /**
  * DefaultEvaluationMetrics.java
- * Copyright (C) 2015 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2016 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -57,16 +57,76 @@ public class DefaultEvaluationMetrics
   /** evaluation via: Kappa statistic. */
   public static final int EVALUATION_KAPPA = 7;
 
+  /** evaluation via: AUC. */
+  public static final int EVALUATION_AUC = 8;
+
+  /** evaluation via: weighted AUC. */
+  public static final int EVALUATION_WEIGHTED_AUC = 9;
+
+  /** evaluation via: PRC. */
+  public static final int EVALUATION_PRC = 10;
+
+  /** evaluation via: weighted PRC. */
+  public static final int EVALUATION_WEIGHTED_PRC = 11;
+
+  /** evaluation via: FMeasure. */
+  public static final int EVALUATION_FMEASURE = 12;
+
+  /** evaluation via: weighted FMeasure. */
+  public static final int EVALUATION_WEIGHTED_FMEASURE = 13;
+
+  /** evaluation via: Matthews Correlation coefficient. */
+  public static final int EVALUATION_MATTHEWS_CC = 14;
+
+  /** evaluation via: precision. */
+  public static final int EVALUATION_PRECISION = 15;
+
+  /** evaluation via: weighted precision. */
+  public static final int EVALUATION_WEIGHTED_PRECISION = 16;
+
+  /** evaluation via: recall. */
+  public static final int EVALUATION_RECALL = 17;
+
+  /** evaluation via: weighted recall. */
+  public static final int EVALUATION_WEIGHTED_RECALL = 18;
+
+  /** evaluation via: true positive rate. */
+  public static final int EVALUATION_TRUE_POSITIVE_RATE = 19;
+
+  /** evaluation via: true negative rate. */
+  public static final int EVALUATION_TRUE_NEGATIVE_RATE = 20;
+
+  /** evaluation via: false positive rate. */
+  public static final int EVALUATION_FALSE_POSITIVE_RATE = 21;
+
+  /** evaluation via: false negative rate. */
+  public static final int EVALUATION_FALSE_NEGATIVE_RATE = 22;
+
   /** evaluation. */
   protected static final Tag[] TAGS_EVALUATION = {
     new Tag(EVALUATION_CC, "CC", "Correlation coefficient"),
+    new Tag(EVALUATION_MATTHEWS_CC, "MCC", "Matthews correlation coefficient"),
     new Tag(EVALUATION_RMSE, "RMSE", "Root mean squared error"),
     new Tag(EVALUATION_RRSE, "RRSE", "Root relative squared error"),
     new Tag(EVALUATION_MAE, "MAE", "Mean absolute error"),
     new Tag(EVALUATION_RAE, "RAE", "Root absolute error"),
     new Tag(EVALUATION_COMBINED, "COMB", "Combined = (1-abs(CC)) + RRSE + RAE"),
     new Tag(EVALUATION_ACC, "ACC", "Accuracy"),
-    new Tag(EVALUATION_KAPPA, "KAP", "Kappa")
+    new Tag(EVALUATION_KAPPA, "KAP", "Kappa"),
+    new Tag(EVALUATION_PRECISION, "PREC", "Precision"),
+    new Tag(EVALUATION_WEIGHTED_PRECISION, "WPREC", "Weighted precision"),
+    new Tag(EVALUATION_RECALL, "REC", "Recall"),
+    new Tag(EVALUATION_WEIGHTED_RECALL, "WREC", "Weighted recall"),
+    new Tag(EVALUATION_AUC, "AUC", "Area under ROC"),
+    new Tag(EVALUATION_WEIGHTED_AUC, "WAUC", "Weighted area under ROC"),
+    new Tag(EVALUATION_PRC, "PRC", "Area under PRC"),
+    new Tag(EVALUATION_WEIGHTED_PRC, "WPRC", "Weighted area under PRC"),
+    new Tag(EVALUATION_FMEASURE, "FM", "F-Measure"),
+    new Tag(EVALUATION_WEIGHTED_FMEASURE, "WFM", "Weighted F-Measure"),
+    new Tag(EVALUATION_TRUE_POSITIVE_RATE, "TPR", "True positive rate"),
+    new Tag(EVALUATION_TRUE_NEGATIVE_RATE, "TNR", "True negative rate"),
+    new Tag(EVALUATION_FALSE_POSITIVE_RATE, "FPR", "False positive rate"),
+    new Tag(EVALUATION_FALSE_NEGATIVE_RATE, "FNR", "False negative rate"),
   };
 
   /**
@@ -98,10 +158,21 @@ public class DefaultEvaluationMetrics
   public boolean invert(int id) {
     switch (id) {
       case EVALUATION_CC:
-        return true;
       case EVALUATION_ACC:
-        return true;
       case EVALUATION_KAPPA:
+      case EVALUATION_MATTHEWS_CC:
+      case EVALUATION_PRECISION:
+      case EVALUATION_WEIGHTED_PRECISION:
+      case EVALUATION_RECALL:
+      case EVALUATION_WEIGHTED_RECALL:
+      case EVALUATION_AUC:
+      case EVALUATION_WEIGHTED_AUC:
+      case EVALUATION_PRC:
+      case EVALUATION_WEIGHTED_PRC:
+      case EVALUATION_FMEASURE:
+      case EVALUATION_WEIGHTED_FMEASURE:
+      case EVALUATION_TRUE_POSITIVE_RATE:
+      case EVALUATION_TRUE_NEGATIVE_RATE:
         return true;
       default:
         return false;
