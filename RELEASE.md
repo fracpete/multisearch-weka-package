@@ -52,3 +52,5 @@ Maven Central
   git push
   ```
 
+* After the artifacts show up on central, update the artifact version used
+  in the dependency fragment of the `README.md` file
