@@ -24,7 +24,7 @@ Add the following dependency in your `pom.xml` to include the package:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>multisearch-weka-package</artifactId>
-      <version>2016.1.13</version>
+      <version>2016.1.14</version>
       <type>jar</type>
       <exclusions>
         <exclusion>
