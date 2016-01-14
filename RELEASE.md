@@ -4,11 +4,20 @@ How to make a release
 Preparation
 -----------
 
-* Change the artifact ID to today''s date, e.g.:
+* Change the artifact ID in `pom.xml` to today's date, e.g.:
 
-  <pre>
+  ```
   2014.12.31-SNAPSHOT
-  </pre>
+  ```
+
+* Update the version, date and URL in `Description.props` to reflect new
+  version, e.g.:
+
+  ```
+  Version=2014.12.31
+  Date=2014-12-31
+  PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2014.12.31/multisearch-2014.12.31.zip
+  ```
 
 * Commit/push all changes
 
@@ -16,13 +25,14 @@ Preparation
 Weka package
 ------------
 
-* Run the following command to generate the package archive for version `1.0.0`:
+* Run the following command to generate the package archive for version
+  `2014.12.31`:
 
-  <pre>
-  ant -f build_package.xml -Dpackage=multisearch-1.0.0 clean make_package
-  </pre>
+  ```
+  ant -f build_package.xml -Dpackage=multisearch-2014.12.31 clean make_package
+  ```
 
-* Create a release tag on github (v1.0.0)
+* Create a release tag on github (`v2014.12.31`)
 * add release notes
 * upload package archive from `dist`
 
@@ -32,13 +42,13 @@ Maven Central
 
 * Run the following command to deploy the artifact:
 
-  <pre>
+  ```
   mvn release:clean release:prepare release:perform
-  </pre>
+  ```
 
 * After successful deployment, push the changes out:
 
-  <pre>
+  ```
   git push
-  </pre>
+  ```
 
