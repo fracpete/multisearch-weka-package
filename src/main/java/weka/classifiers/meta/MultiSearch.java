@@ -93,9 +93,10 @@ import java.util.concurrent.TimeUnit;
  <!-- options-start -->
  * Valid options are: <p>
  * 
- * <pre> -E &lt;CC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP&gt;
+ * <pre> -E &lt;CC|MCC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP|PREC|WPREC|REC|WREC|AUC|WAUC|PRC|WPRC|FM|WFM|TPR|TNR|FPR|FNR&gt;
  *  Determines the parameter used for evaluation:
  *  CC = Correlation coefficient
+ *  MCC = Matthews correlation coefficient
  *  RMSE = Root mean squared error
  *  RRSE = Root relative squared error
  *  MAE = Mean absolute error
@@ -103,6 +104,20 @@ import java.util.concurrent.TimeUnit;
  *  COMB = Combined = (1-abs(CC)) + RRSE + RAE
  *  ACC = Accuracy
  *  KAP = Kappa
+ *  PREC = Precision
+ *  WPREC = Weighted precision
+ *  REC = Recall
+ *  WREC = Weighted recall
+ *  AUC = Area under ROC
+ *  WAUC = Weighted area under ROC
+ *  PRC = Area under PRC
+ *  WPRC = Weighted area under PRC
+ *  FM = F-Measure
+ *  WFM = Weighted F-Measure
+ *  TPR = True positive rate
+ *  TNR = True negative rate
+ *  FPR = False positive rate
+ *  FNR = False negative rate
  *  (default: CC)</pre>
  * 
  * <pre> -search "&lt;classname options&gt;"
@@ -524,9 +539,10 @@ public class MultiSearch
    <!-- options-start -->
    * Valid options are: <p>
    * 
-   * <pre> -E &lt;CC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP&gt;
+   * <pre> -E &lt;CC|MCC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP|PREC|WPREC|REC|WREC|AUC|WAUC|PRC|WPRC|FM|WFM|TPR|TNR|FPR|FNR&gt;
    *  Determines the parameter used for evaluation:
    *  CC = Correlation coefficient
+   *  MCC = Matthews correlation coefficient
    *  RMSE = Root mean squared error
    *  RRSE = Root relative squared error
    *  MAE = Mean absolute error
@@ -534,6 +550,20 @@ public class MultiSearch
    *  COMB = Combined = (1-abs(CC)) + RRSE + RAE
    *  ACC = Accuracy
    *  KAP = Kappa
+   *  PREC = Precision
+   *  WPREC = Weighted precision
+   *  REC = Recall
+   *  WREC = Weighted recall
+   *  AUC = Area under ROC
+   *  WAUC = Weighted area under ROC
+   *  PRC = Area under PRC
+   *  WPRC = Weighted area under PRC
+   *  FM = F-Measure
+   *  WFM = Weighted F-Measure
+   *  TPR = True positive rate
+   *  TNR = True negative rate
+   *  FPR = False positive rate
+   *  FNR = False negative rate
    *  (default: CC)</pre>
    * 
    * <pre> -search "&lt;classname options&gt;"
@@ -750,9 +780,18 @@ public class MultiSearch
   }
 
   /**
+   * Returns the underlying tags.
+   *
+   * @return		the tags
+   */
+  public Tag[] getMetricsTags() {
+    return m_Metrics.getTags();
+  }
+
+  /**
    * Sets the criterion to use for evaluating the classifier performance.
    *
-   * @param value 	.the evaluation criterion
+   * @param value 	the evaluation criterion
    */
   public void setEvaluation(SelectedTag value) {
     if (value.getTags() == m_Metrics.getTags()) {
