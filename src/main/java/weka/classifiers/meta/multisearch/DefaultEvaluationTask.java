@@ -39,16 +39,17 @@ public class DefaultEvaluationTask
    * Initializes the task.
    *
    * @param owner		the owning MultiSearch classifier
-   * @param inst		the data
+   * @param train		the training data
+   * @param test		the test data, can be null
    * @param generator		the generator to use
    * @param values		the setup values
    * @param folds		the number of cross-validation folds
    * @param eval		the type of evaluation
    */
   public DefaultEvaluationTask(
-    MultiSearch owner, Instances inst,
+    MultiSearch owner, Instances train, Instances test,
     SetupGenerator generator, Point<Object> values, int folds, int eval) {
-    super(owner, inst, generator, values, folds, eval);
+    super(owner, train, test, generator, values, folds, eval);
   }
 
   /**
@@ -84,14 +85,20 @@ public class DefaultEvaluationTask
 
     // evaluate
     try {
-      eval = new Evaluation(m_Data);
+      eval = new Evaluation(m_Train);
       eval.setDiscardPredictions(canDiscardPredictions());
-      if (m_Folds >= 2) {
-	eval.crossValidateModel(classifier, m_Data, m_Folds, new Random(m_Owner.getSeed()));
+      if (m_Test == null) {
+        if (m_Folds >= 2) {
+          eval.crossValidateModel(classifier, m_Train, m_Folds, new Random(m_Owner.getSeed()));
+        }
+        else {
+          classifier.buildClassifier(m_Train);
+          eval.evaluateModel(classifier, m_Train);
+        }
       }
       else {
-	classifier.buildClassifier(m_Data);
-	eval.evaluateModel(classifier, m_Data);
+        classifier.buildClassifier(m_Train);
+        eval.evaluateModel(classifier, m_Test);
       }
       completed = true;
     }

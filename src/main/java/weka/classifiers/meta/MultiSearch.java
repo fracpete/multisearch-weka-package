@@ -47,6 +47,7 @@ import weka.core.Summarizable;
 import weka.core.Tag;
 import weka.core.Utils;
 import weka.core.WekaException;
+import weka.core.converters.ConverterUtils.DataSource;
 import weka.core.setupgenerator.AbstractParameter;
 import weka.core.setupgenerator.MathParameter;
 import weka.core.setupgenerator.Point;
@@ -82,6 +83,8 @@ import java.util.concurrent.TimeUnit;
  * <br>
  * The initial space is worked on with 2-fold CV to determine the values of the parameters for the selected type of evaluation (e.g., accuracy). The best point in the space is then taken as center and a 10-fold CV is performed with the adjacent parameters. If better parameters are found, then this will act as new center and another 10-fold CV will be performed (kind of hill-climbing). This process is repeated until no better pair is found or the best pair is on the border of the parameter space.<br>
  * The number of CV-folds for the initial and subsequent spaces can be adjusted, of course.<br>
+ * <br>
+ * Instead of using cross-validation, it is possible to specify test sets, for the initial space evaluation and the subsequent ones.<br>
  * <br>
  * The outcome of a mathematical function (= double), MultiSearch will convert to integers (values are just cast to int), booleans (0 is false, otherwise true), float, char and long if necessary.<br>
  * Via a user-supplied 'list' of parameters (blank-separated), one can also set strings and selected tags (drop-down comboboxes in Weka's GenericObjectEditor). Classnames with options (e.g., classifiers with their options) are possible as well.<br>
@@ -143,6 +146,16 @@ import java.util.concurrent.TimeUnit;
  *  Numbers smaller than 2 turn off cross-validation and just
  *  perform evaluation on the training set.
  *  (default: 10)</pre>
+ * 
+ * <pre> -initial-test-set &lt;filename&gt;
+ *  The (optional) test set to use for the initial space.
+ *  Gets ignored if pointing to a file. Overrides cross-validation.
+ *  (default: .)</pre>
+ * 
+ * <pre> -subsequent-test-set &lt;filename&gt;
+ *  The (optional) test set to use for the subsequent sub-spaces.
+ *  Gets ignored if pointing to a file. Overrides cross-validation.
+ *  (default: .)</pre>
  * 
  * <pre> -num-slots &lt;num&gt;
  *  Number of execution slots.
@@ -257,9 +270,6 @@ public class MultiSearch
   /** whether all performances in the space are the same. */
   protected boolean m_UniformPerformance = false;
 
-  /** the filtered classifier to use, in case a filter is used. */
-  protected FilteredClassifier m_FilteredClassifier;
-
   /** the default parameters. */
   protected AbstractParameter[] m_DefaultParameters;
 
@@ -268,6 +278,12 @@ public class MultiSearch
 
   /** number of cross-validation folds in the subsequent spaces. */
   protected int m_SubsequentSpaceNumFolds = 10;
+
+  /** the optional test set to use for the initial evaluation (overrides cross-validation, ignored if dir). */
+  protected File m_InitialSpaceTestSet = new File(".");
+
+  /** the optional test set to use for the subsequent evaluation (overrides cross-validation, ignored if dir). */
+  protected File m_SubsequentSpaceTestSet = new File(".");
 
   /** The number of threads to have executing at any one time. */
   protected int m_NumExecutionSlots = 1;
@@ -287,6 +303,12 @@ public class MultiSearch
 
   /** for storing the performances. */
   protected Vector<Performance> m_Performances;
+
+  /** the optional test set to use for the initial evaluation. */
+  protected Instances m_InitialSpaceTestInst;
+
+  /** the optional test set to use for the subsequent evaluation. */
+  protected Instances m_SubsequentSpaceTestInst;
 
   /**
    * the default constructor.
@@ -352,6 +374,9 @@ public class MultiSearch
 	+ "space.\n"
 	+ "The number of CV-folds for the initial and subsequent spaces can be "
 	+ "adjusted, of course.\n"
+	+ "\n"
+	+ "Instead of using cross-validation, it is possible to specify test sets, "
+	+ "for the initial space evaluation and the subsequent ones.\n"
 	+ "\n"
 	+ "The outcome of a mathematical function (= double), MultiSearch will convert "
 	+ "to integers (values are just cast to int), booleans (0 is false, otherwise "
@@ -479,6 +504,18 @@ public class MultiSearch
       "subsequent-folds", 1, "-subsequent-folds <num>"));
 
     result.addElement(new Option(
+      "\tThe (optional) test set to use for the initial space.\n"
+	+ "\tGets ignored if pointing to a file. Overrides cross-validation.\n"
+	+ "\t(default: .)",
+      "initial-test-set", 1, "-initial-test-set <filename>"));
+
+    result.addElement(new Option(
+      "\tThe (optional) test set to use for the subsequent sub-spaces.\n"
+	+ "\tGets ignored if pointing to a file. Overrides cross-validation.\n"
+	+ "\t(default: .)",
+      "subsequent-test-set", 1, "-subsequent-test-set <filename>"));
+
+    result.addElement(new Option(
       "\tNumber of execution slots.\n"
 	+ "\t(default 1 - i.e. no parallelism)",
       "num-slots", 1, "-num-slots <num>"));
@@ -523,6 +560,12 @@ public class MultiSearch
     result.add("-subsequent-folds");
     result.add("" + getSubsequentSpaceNumFolds());
 
+    result.add("-initial-test-set");
+    result.add("" + getInitialSpaceTestSet());
+
+    result.add("-subsequent-test-set");
+    result.add("" + getSubsequentSpaceTestSet());
+
     result.add("-num-slots");
     result.add("" + getNumExecutionSlots());
 
@@ -534,124 +577,7 @@ public class MultiSearch
   }
 
   /**
-   * Parses the options for this object. <p/>
-   *
-   <!-- options-start -->
-   * Valid options are: <p>
-   * 
-   * <pre> -E &lt;CC|MCC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP|PREC|WPREC|REC|WREC|AUC|WAUC|PRC|WPRC|FM|WFM|TPR|TNR|FPR|FNR&gt;
-   *  Determines the parameter used for evaluation:
-   *  CC = Correlation coefficient
-   *  MCC = Matthews correlation coefficient
-   *  RMSE = Root mean squared error
-   *  RRSE = Root relative squared error
-   *  MAE = Mean absolute error
-   *  RAE = Root absolute error
-   *  COMB = Combined = (1-abs(CC)) + RRSE + RAE
-   *  ACC = Accuracy
-   *  KAP = Kappa
-   *  PREC = Precision
-   *  WPREC = Weighted precision
-   *  REC = Recall
-   *  WREC = Weighted recall
-   *  AUC = Area under ROC
-   *  WAUC = Weighted area under ROC
-   *  PRC = Area under PRC
-   *  WPRC = Weighted area under PRC
-   *  FM = F-Measure
-   *  WFM = Weighted F-Measure
-   *  TPR = True positive rate
-   *  TNR = True negative rate
-   *  FPR = False positive rate
-   *  FNR = False negative rate
-   *  (default: CC)</pre>
-   * 
-   * <pre> -search "&lt;classname options&gt;"
-   *  A property search setup.
-   * </pre>
-   * 
-   * <pre> -sample-size &lt;num&gt;
-   *  The size (in percent) of the sample to search the inital space with.
-   *  (default: 100)</pre>
-   * 
-   * <pre> -log-file &lt;filename&gt;
-   *  The log file to log the messages to.
-   *  (default: none)</pre>
-   * 
-   * <pre> -initial-folds &lt;num&gt;
-   *  The number of cross-validation folds for the initial space.
-   *  Numbers smaller than 2 turn off cross-validation and just
-   *  perform evaluation on the training set.
-   *  (default: 2)</pre>
-   * 
-   * <pre> -subsequent-folds &lt;num&gt;
-   *  The number of cross-validation folds for the subsequent sub-spaces.
-   *  Numbers smaller than 2 turn off cross-validation and just
-   *  perform evaluation on the training set.
-   *  (default: 10)</pre>
-   * 
-   * <pre> -num-slots &lt;num&gt;
-   *  Number of execution slots.
-   *  (default 1 - i.e. no parallelism)</pre>
-   * 
-   * <pre> -S &lt;num&gt;
-   *  Random number seed.
-   *  (default 1)</pre>
-   * 
-   * <pre> -W
-   *  Full name of base classifier.
-   *  (default: weka.classifiers.functions.LinearRegression)</pre>
-   * 
-   * <pre> -output-debug-info
-   *  If set, classifier is run in debug mode and
-   *  may output additional info to the console</pre>
-   * 
-   * <pre> -do-not-check-capabilities
-   *  If set, classifier capabilities are not checked before classifier is built
-   *  (use with caution).</pre>
-   * 
-   * <pre> -num-decimal-places
-   *  The number of decimal places for the output of numbers in the model (default 2).</pre>
-   * 
-   * <pre> 
-   * Options specific to classifier weka.classifiers.functions.LinearRegression:
-   * </pre>
-   * 
-   * <pre> -S &lt;number of selection method&gt;
-   *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
-   *  (default 0 = M5' method)</pre>
-   * 
-   * <pre> -C
-   *  Do not try to eliminate colinear attributes.
-   * </pre>
-   * 
-   * <pre> -S &lt;number of selection method&gt;
-   *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
-   *  (default 0 = M5' method)</pre>
-   * 
-   * <pre> -R &lt;double&gt;
-   *  Set ridge parameter (default 1.0e-8).
-   * </pre>
-   * 
-   * <pre> -minimal
-   *  Conserve memory, don't keep dataset header and means/stdevs.
-   *  Model cannot be printed out if this option is enabled. (default: keep data)</pre>
-   * 
-   * <pre> -additional-stats
-   *  Output additional statistics.</pre>
-   * 
-   * <pre> -output-debug-info
-   *  If set, classifier is run in debug mode and
-   *  may output additional info to the console</pre>
-   * 
-   * <pre> -do-not-check-capabilities
-   *  If set, classifier capabilities are not checked before classifier is built
-   *  (use with caution).</pre>
-   * 
-   * <pre> -num-decimal-places
-   *  The number of decimal places for the output of numbers in the model (default 4).</pre>
-   * 
-   <!-- options-end -->
+   * Parses the options for this object.
    *
    * @param options	the options to use
    * @throws Exception	if setting of options fails
@@ -713,6 +639,18 @@ public class MultiSearch
       setSubsequentSpaceNumFolds(Integer.parseInt(tmpStr));
     else
       setSubsequentSpaceNumFolds(10);
+
+    tmpStr = Utils.getOption("initial-test-set", options);
+    if (tmpStr.length() != 0)
+      setInitialSpaceTestSet(new File(tmpStr));
+    else
+      setInitialSpaceTestSet(new File(System.getProperty("user.dir")));
+
+    tmpStr = Utils.getOption("subsequent-test-set", options);
+    if (tmpStr.length() != 0)
+      setSubsequentSpaceTestSet(new File(tmpStr));
+    else
+      setSubsequentSpaceTestSet(new File(System.getProperty("user.dir")));
 
     tmpStr = Utils.getOption("num-slots", options);
     if (tmpStr.length() != 0)
@@ -924,6 +862,66 @@ public class MultiSearch
    */
   public void setSubsequentSpaceNumFolds(int value) {
     m_SubsequentSpaceNumFolds = value;
+  }
+
+  /**
+   * Returns the tip text for this property.
+   *
+   * @return 		tip text for this property suitable for
+   * 			displaying in the explorer/experimenter gui
+   */
+  public String initialSpaceTestSetTipText() {
+    return
+      "The (optional) test set to use for evaluating the initial search space; "
+      + "overrides cross-validation; gets ignored if pointing to a directory.";
+  }
+
+  /**
+   * Gets the test set to use for the initial space.
+   *
+   * @return the number of folds.
+   */
+  public File getInitialSpaceTestSet() {
+    return m_InitialSpaceTestSet;
+  }
+
+  /**
+   * Sets the test set to use folds for the initial space.
+   *
+   * @param value the test set, ignored if dir.
+   */
+  public void setInitialSpaceTestSet(File value) {
+    m_InitialSpaceTestSet = value;
+  }
+
+  /**
+   * Returns the tip text for this property.
+   *
+   * @return 		tip text for this property suitable for
+   * 			displaying in the explorer/experimenter gui
+   */
+  public String subsequentSpaceTestSetTipText() {
+    return
+      "The (optional) test set to use for evaluating the subsequent search sub-spaces; "
+      + "overrides cross-validation; gets ignored if pointing to a directory.";
+  }
+
+  /**
+   * Gets the test set to use for the sub-sequent sub-spaces.
+   *
+   * @return the test set, ignored if dir.
+   */
+  public File getSubsequentSpaceTestSet() {
+    return m_SubsequentSpaceTestSet;
+  }
+
+  /**
+   * Sets the test set to use for the sub-sequent sub-spaces.
+   *
+   * @param value the test set, ignored if dir.
+   */
+  public void setSubsequentSpaceTestSet(File value) {
+    m_SubsequentSpaceTestSet = value;
   }
 
   /**
@@ -1280,13 +1278,14 @@ public class MultiSearch
    * specified number of folds.
    *
    * @param space	the space to work on
-   * @param inst	the data to work with
+   * @param train	the training data to work with
+   * @param test	the test data to use, null if to use cross-validation
    * @param folds	the number of folds for cross-validation, if &lt;2 then
    * 			evaluation based on the training set is used
    * @return		the best point (not actual parameters!)
    * @throws Exception	if setup or training fails
    */
-  protected Point<Object> determineBestInSpace(Space space, Instances inst, int folds) throws Exception {
+  protected Point<Object> determineBestInSpace(Space space, Instances train, Instances test, int folds) throws Exception {
     Point<Object>		result;
     int				i;
     Enumeration<Point<Object>>	enm;
@@ -1322,7 +1321,7 @@ public class MultiSearch
       }
       else {
 	allCached = false;
-	newTask   = m_Factory.newTask(this, inst, m_Generator, values, folds, m_Evaluation);
+	newTask   = m_Factory.newTask(this, train, test, m_Generator, values, folds, m_Evaluation);
 	m_ExecutorPool.execute(newTask);
       }
     }
@@ -1404,7 +1403,7 @@ public class MultiSearch
 
     // find first center
     log("\n=== Initial space - Start ===");
-    result = determineBestInSpace(m_Space, sample, m_InitialSpaceNumFolds);
+    result = determineBestInSpace(m_Space, sample, m_InitialSpaceTestInst, m_InitialSpaceNumFolds);
     log("\nResult of Step 1: " + result + "\n");
     log("=== Initial space - End ===\n");
 
@@ -1425,7 +1424,7 @@ public class MultiSearch
 	// around it
 	if (!finished) {
 	  neighborSpace = m_Space.subspace(center);
-	  result = determineBestInSpace(neighborSpace, sample, m_SubsequentSpaceNumFolds);
+	  result = determineBestInSpace(neighborSpace, sample, m_SubsequentSpaceTestInst, m_SubsequentSpaceNumFolds);
 	  log("\nResult of Step 2/Iteration " + (iteration) + ":\n" + result);
 	  finished = m_UniformPerformance;
 
@@ -1448,6 +1447,38 @@ public class MultiSearch
   }
 
   /**
+   * Loads test data, if required.
+   *
+   * @param data	the current training data
+   * @throws Exception	if test sets are not compatible with training data
+   */
+  protected void loadTestData(Instances data) throws Exception {
+    String		msg;
+
+    m_InitialSpaceTestInst = null;
+    if (m_InitialSpaceTestSet.exists() && !m_InitialSpaceTestSet.isDirectory()) {
+      m_InitialSpaceTestInst = DataSource.read(m_InitialSpaceTestSet.getAbsolutePath());
+      m_InitialSpaceTestInst.setClassIndex(data.classIndex());
+      msg = data.equalHeadersMsg(m_InitialSpaceTestInst);
+      if (msg != null)
+	throw new IllegalArgumentException("Test set for initial space not compatible with training dta:\n" +  msg);
+      m_InitialSpaceTestInst.deleteWithMissingClass();
+      log("Using test set for initial space: " + m_InitialSpaceTestSet);
+    }
+
+    m_SubsequentSpaceTestInst = null;
+    if (m_SubsequentSpaceTestSet.exists() && !m_SubsequentSpaceTestSet.isDirectory()) {
+      m_SubsequentSpaceTestInst = DataSource.read(m_SubsequentSpaceTestSet.getAbsolutePath());
+      m_SubsequentSpaceTestInst.setClassIndex(data.classIndex());
+      msg = data.equalHeadersMsg(m_SubsequentSpaceTestInst);
+      if (msg != null)
+	throw new IllegalArgumentException("Test set for subsequent sub-spaces not compatible with training dta:\n" +  msg);
+      m_SubsequentSpaceTestInst.deleteWithMissingClass();
+      log("Using test set for subsequent sub-spaces: " + m_InitialSpaceTestSet);
+    }
+  }
+
+  /**
    * builds the classifier.
    *
    * @param data        the training instances
@@ -1464,9 +1495,16 @@ public class MultiSearch
     data = new Instances(data);
     data.deleteWithMissingClass();
 
+    log("\n---> start");
+
+    // test data
+    loadTestData(data);
+
     m_Cache        = new PerformanceCache();
     m_Performances = new Vector<Performance>();
     startExecutorPool();
+
+    log("\n---> init search space");
 
     // build space
     m_Generator.reset();
@@ -1487,8 +1525,12 @@ public class MultiSearch
     m_BestClassifier = multi.getClassifier();
 
     // train classifier
+    log("\n---> train best");
+    log(Utils.toCommandLine(m_BestClassifier));
     m_Classifier = AbstractClassifier.makeCopy(m_BestClassifier);
     m_Classifier.buildClassifier(data);
+
+    log("\n---> end");
   }
 
   /**

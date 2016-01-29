@@ -15,7 +15,7 @@
 
 /**
  * AbstractEvaluationTask.java
- * Copyright (C) 2015 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2016 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -35,7 +35,10 @@ public abstract class AbstractEvaluationTask
   protected MultiSearch m_Owner;
 
   /** the data to use for training. */
-  protected Instances m_Data;
+  protected Instances m_Train;
+
+  /** the test set to use (cross-validation if null). */
+  protected Instances m_Test;
 
   /** the setup generator to use. */
   protected SetupGenerator m_Generator;
@@ -53,24 +56,32 @@ public abstract class AbstractEvaluationTask
    * Initializes the task.
    *
    * @param owner		the owning MultiSearch classifier
-   * @param inst		the data
+   * @param train		the training data
+   * @param test		the test data, can be null
    * @param generator		the generator to use
    * @param values		the setup values
    * @param folds		the number of cross-validation folds
    * @param eval		the type of evaluation
    */
   public AbstractEvaluationTask(
-    MultiSearch owner, Instances inst,
+    MultiSearch owner, Instances train, Instances test,
     SetupGenerator generator, Point<Object> values, int folds, int eval) {
 
     super();
 
     m_Owner      = owner;
-    m_Data       = inst;
+    m_Train      = train;
+    m_Test       = test;
     m_Generator  = generator;
     m_Values     = values;
     m_Folds      = folds;
     m_Evaluation = eval;
+
+    if (m_Test != null) {
+      String msg = m_Train.equalHeadersMsg(m_Test);
+      if (msg != null)
+	throw new IllegalArgumentException(msg);
+    }
   }
 
   /**
@@ -103,7 +114,8 @@ public abstract class AbstractEvaluationTask
   public void cleanUp() {
     // clean up
     m_Owner     = null;
-    m_Data      = null;
+    m_Train     = null;
+    m_Test      = null;
     m_Generator = null;
     m_Values    = null;
   }

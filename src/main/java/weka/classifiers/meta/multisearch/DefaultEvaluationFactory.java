@@ -15,7 +15,7 @@
 
 /**
  * DefaultEvaluationFactory.java
- * Copyright (C) 2015 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2016 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -62,7 +62,8 @@ public class DefaultEvaluationFactory
    * Returns a new task.
    *
    * @param owner	the owning search
-   * @param inst	the data
+   * @param train	the training data
+   * @param test	the test data
    * @param generator	the generator
    * @param values	the values
    * @param folds	the number of folds
@@ -70,7 +71,7 @@ public class DefaultEvaluationFactory
    * @return		the task
    */
   @Override
-  public DefaultEvaluationTask newTask(MultiSearch owner, Instances inst, SetupGenerator generator, Point<Object> values, int folds, int eval) {
-    return new DefaultEvaluationTask(owner, inst, generator, values, folds, eval);
+  public DefaultEvaluationTask newTask(MultiSearch owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval) {
+    return new DefaultEvaluationTask(owner, train, test, generator, values, folds, eval);
   }
 }

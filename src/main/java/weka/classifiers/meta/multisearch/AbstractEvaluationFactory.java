@@ -15,7 +15,7 @@
 
 /**
  * AbstractEvaluationFactory.java
- * Copyright (C) 2015 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2016 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -57,12 +57,13 @@ public abstract class AbstractEvaluationFactory<M extends AbstractEvaluationMetr
    * Returns a new task.
    *
    * @param owner	the owning search
-   * @param inst	the data
+   * @param train	the training data
+   * @param test	the test data
    * @param generator	the generator
    * @param values	the values
    * @param folds	the number of folds
    * @param eval	the evaluation
    * @return		the task
    */
-  public abstract T newTask(MultiSearch owner, Instances inst, SetupGenerator generator, Point<Object> values, int folds, int eval);
+  public abstract T newTask(MultiSearch owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval);
 }
