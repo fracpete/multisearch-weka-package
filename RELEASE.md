@@ -35,6 +35,7 @@ Weka package
 * Create a release tag on github (`v2014.12.31`)
 * add release notes
 * upload package archive from `dist`
+* add link to this zip file in the `Releases` section of the `README.md` file
 
 
 Maven Central

@@ -6,6 +6,17 @@ Can be used for optimizing an arbitrary number of parameters, in contrast to
 GridSearch which always requires you to optimize two parameters. However, it
 does not offer automatic search space extensions like GridSearch.
 
+Releases
+--------
+
+* [Release v2016.1.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.30/multisearch-2016.1.30.zip)
+* [Release v2016.1.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.15/multisearch-2016.1.15.zip)
+* [Release v2016.1.14](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.14/multisearch-2016.1.14.zip)
+* [Release v2016.1.13](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.13/multisearch-2016.1.13.zip)
+* [Release v2015.10.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2015.10.15/multisearch-2015.10.15.zip)
+* [Release v2015.9.2](https://github.com/fracpete/multisearch-weka-package/releases/download/v2015.9.2/multisearch-2015.9.2.zip)
+* [Release v2014.12.10](https://github.com/fracpete/multisearch-weka-package/releases/download/v2014.12.10/multisearch-2014.12.10.zip)
+
 
 How to use packages
 -------------------
