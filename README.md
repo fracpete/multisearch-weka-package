@@ -9,6 +9,8 @@ does not offer automatic search space extensions like GridSearch.
 Releases
 --------
 
+Click on one of the following links to download the corresponding Weka package:
+
 * [2016.1.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.30/multisearch-2016.1.30.zip)
 * [2016.1.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.15/multisearch-2016.1.15.zip)
 * [2016.1.14](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.14/multisearch-2016.1.14.zip)
