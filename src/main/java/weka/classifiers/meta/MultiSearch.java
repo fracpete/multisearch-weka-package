@@ -56,9 +56,13 @@ import weka.filters.Filter;
 import weka.filters.unsupervised.instance.Resample;
 
 import java.io.File;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Vector;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -266,6 +270,8 @@ public class MultiSearch
   /** the cache for points in the space that got calculated
    * (raw points in space, not evaluated ones!). */
   protected PerformanceCache m_Cache;
+  
+  protected List<Entry<Integer, Point<Object>>> m_Trace;
 
   /** whether all performances in the space are the same. */
   protected boolean m_UniformPerformance = false;
@@ -1274,6 +1280,43 @@ public class MultiSearch
   }
 
   /**
+   * Returns the size of m_Trace, which is technically the amount of
+   * setups that where tested in order to find the best. 
+   */
+  public int getTraceSize() {
+    return m_Trace.size();
+  }
+  
+  /**
+   * Returns the CLI string of a given item in the trace.
+   * 
+   * @pre index < getTraceSize()
+   * @param index the index of the trace item to obtain
+   * @throws Exception 
+   */
+  public String getTraceClassifierAsCli(int index) throws Exception {
+	MultiSearch multi = (MultiSearch) m_Generator.setup(this, m_Trace.get(index).getValue());
+    return getCommandline(multi.getClassifier());
+  }
+  
+  /**
+   * Returns the performance score of a given item in the trace.
+   * 
+   * @pre index < getTraceSize(), m_Cache contains the specified item
+   * @param index the index of the trace item to obtain
+   * @throws Exception 
+   */
+  public Double getTraceValue(int index) throws Exception {
+    Entry<Integer, Point<Object>> currentItem = m_Trace.get(index);
+    if (m_Cache.isCached(currentItem.getKey(), currentItem.getValue())) {
+      Performance performance = m_Cache.get(currentItem.getKey(), currentItem.getValue());
+      return performance.getPerformance();
+    } else {
+      throw new Exception("Setup not found in cache. ");
+    }
+  }
+
+  /**
    * determines the best point for the given space, using CV with
    * specified number of folds.
    *
@@ -1311,6 +1354,7 @@ public class MultiSearch
 
     while (enm.hasMoreElements()) {
       values = enm.nextElement();
+      m_Trace.add(new AbstractMap.SimpleEntry<Integer,Point<Object>>(folds,values));
 
       // already calculated?
       if (m_Cache.isCached(folds, values)) {
@@ -1382,6 +1426,7 @@ public class MultiSearch
     Instances		sample;
     Resample		resample;
     MultiSearch		multi;
+    m_Trace = new ArrayList<Entry<Integer,Point<Object>>>();
 
     log("Step 1:\n");
 
