@@ -862,12 +862,32 @@ public class MultiSearch
   }
 
   /**
+   * Returns the folds of a given item in the trace.
+   *
+   * @param index the index of the trace item to obtain
+   */
+  public Integer getTraceFolds(int index) {
+    return m_Algorithm.getTraceFolds(index);
+  }
+
+  /**
+   * Returns the performance of a given item in the trace.
+   *
+   * @param index the index of the trace item to obtain
+   */
+  public Performance getTrace(int index) {
+    return m_Algorithm.getTrace(index);
+  }
+
+  /**
    * builds the classifier.
    *
    * @param data        the training instances
    * @throws Exception  if something goes wrong
    */
   public void buildClassifier(Instances data) throws Exception {
+    int		i;
+
     // can classifier handle the data?
     getCapabilities().testWithFail(data);
 
@@ -886,6 +906,12 @@ public class MultiSearch
     m_Classifier.buildClassifier(data);
 
     log("\n---> train best - end");
+
+    if (m_Debug) {
+      log("\n---> Trace (format: #. folds/performance - setup)");
+      for (i = 0; i < getTraceSize(); i++)
+	log((i + 1) + ". " + getTraceFolds(i) + "/" + getTraceValue(i) + " - " + getTraceClassifierAsCli(i));
+    }
   }
 
   /**
@@ -909,6 +935,8 @@ public class MultiSearch
   public String toString() {
     StringBuilder	result;
     int			i;
+    Performance		performance;
+    Classifier		cls;
 
     result = new StringBuilder();
 
@@ -927,9 +955,10 @@ public class MultiSearch
 	  + m_Classifier.toString());
 
       if (m_Debug) {
-	result.append("\n\nTrace:\n");
-	for (i = 0; i < getTraceSize(); i++)
-	  result.append("\n" + (i+1) + ". " + getTraceValue(i) + " = " + getTraceClassifierAsCli(i));
+	result.append("\n\nTrace (format: #. folds/performance - setup):\n");
+	for (i = 0; i < getTraceSize(); i++) {
+	  result.append("\n" + (i + 1) + ". " + getTraceFolds(i) + "/" + getTraceValue(i) + " - " + getTraceClassifierAsCli(i));
+	}
       }
     }
 

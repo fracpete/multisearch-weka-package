@@ -35,10 +35,9 @@ import weka.filters.unsupervised.instance.Resample;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Map.Entry;
 import java.util.Vector;
 
 /**
@@ -524,7 +523,7 @@ public class DefaultSearch
       if (m_Cache.isCached(folds, values)) {
 	performance = m_Cache.get(folds, values);
 	m_Performances.add(performance);
-	addTrace(performance);
+	m_Trace.add(new AbstractMap.SimpleEntry<Integer, Performance>(folds, performance));
 	log(performance + ": cached=true");
 	m_Completed++;
       }
@@ -592,8 +591,6 @@ public class DefaultSearch
     Resample 		resample;
     Classifier		cls;
 
-    m_Trace = new ArrayList<Entry<Classifier, Double>>();
-
     log("Step 1:\n");
 
     // generate sample?
@@ -649,7 +646,7 @@ public class DefaultSearch
       while (!finished);
     }
 
-    log("\nFinal result:" + result);
+    log("\nFinal result: " + result);
     evals = m_Owner.getGenerator().evaluate(result);
     cls = (Classifier) m_Owner.getGenerator().setup((Serializable) m_Owner.getClassifier(), evals);
     log("Classifier: " + getCommandline(cls));

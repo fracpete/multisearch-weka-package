@@ -47,7 +47,7 @@ import java.util.Vector;
 public abstract class AbstractSearch
   implements Serializable, Cloneable, OptionHandler {
 
-  protected List<Entry<Classifier, Double>> m_Trace;
+  protected List<Entry<Integer, Performance>> m_Trace;
 
   /** the owner. */
   protected transient MultiSearch m_Owner;
@@ -251,18 +251,23 @@ public abstract class AbstractSearch
     m_Owner.logPerformances(space, performances);
   }
 
-  protected void addTrace(Performance performance) {
+  /**
+   * Turns a performance setup into a classifier.
+   *
+   * @param performance	the setup to convert
+   * @return		the generated classifier or null in case of an error
+   */
+  public Classifier performanceToClassifier(Performance performance) {
     Point<Object>	evals;
-    Classifier		cls;
 
     try {
       evals = m_Owner.getGenerator().evaluate(performance.getValues());
-      cls = (Classifier) m_Owner.getGenerator().setup((Serializable) m_Owner.getClassifier(), evals);
-      m_Trace.add(new AbstractMap.SimpleEntry<Classifier, Double>(cls, performance.getPerformance()));
+      return (Classifier) m_Owner.getGenerator().setup((Serializable) m_Owner.getClassifier(), evals);
     }
     catch (Exception e) {
       System.err.println("Failed to store trace for performance: " + performance);
       e.printStackTrace();
+      return null;
     }
   }
 
@@ -275,15 +280,12 @@ public abstract class AbstractSearch
    * @see		#m_Failed
    */
   public void addPerformance(Performance performance, int folds) {
-    Point<Object>	evals;
-    Classifier		cls;
-
     if (m_Failed > 0)
       return;
 
     m_Performances.add(performance);
     m_Cache.add(folds, performance);
-    addTrace(performance);
+    m_Trace.add(new AbstractMap.SimpleEntry<Integer, Performance>(folds, performance));
   }
 
   /**
@@ -309,7 +311,7 @@ public abstract class AbstractSearch
    * @param index the index of the trace item to obtain
    */
   public String getTraceClassifierAsCli(int index) {
-    return getCommandline(m_Trace.get(index).getKey());
+    return getCommandline(performanceToClassifier(m_Trace.get(index).getValue()));
   }
 
   /**
@@ -318,6 +320,24 @@ public abstract class AbstractSearch
    * @param index the index of the trace item to obtain
    */
   public Double getTraceValue(int index) {
+    return m_Trace.get(index).getValue().getPerformance();
+  }
+
+  /**
+   * Returns the folds of a given item in the trace.
+   *
+   * @param index the index of the trace item to obtain
+   */
+  public Integer getTraceFolds(int index) {
+    return m_Trace.get(index).getKey();
+  }
+
+  /**
+   * Returns the performance of a given item in the trace.
+   *
+   * @param index the index of the trace item to obtain
+   */
+  public Performance getTrace(int index) {
     return m_Trace.get(index).getValue();
   }
 
@@ -357,7 +377,7 @@ public abstract class AbstractSearch
   public void preSearch(Instances data) throws Exception {
     m_Cache        = new PerformanceCache();
     m_Performances = new Vector<Performance>();
-    m_Trace        = new ArrayList<Entry<Classifier, Double>>();
+    m_Trace        = new ArrayList<Entry<Integer, Performance>>();
 
     m_Owner.getGenerator().reset();
     m_Space = m_Owner.getGenerator().getSpace();
