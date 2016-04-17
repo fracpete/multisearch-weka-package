@@ -63,7 +63,6 @@ public class SpaceDimension
    * 
    * @param param 	the search parameter to obtain the data from
    * @throws Exception	if splitting of list fails using Utils.splitOptions(String)
-   * @see		AbstractParameter#getList()
    * @see		Utils#splitOptions(String)
    */
   public SpaceDimension(AbstractParameter param) throws Exception {
@@ -230,8 +229,6 @@ public class SpaceDimension
    * returns the tye of dimension.
    * 
    * @return		the type
-   * @see		MultiSearch#TYPE_FUNCTION
-   * @see		MultiSearch#TYPE_LIST
    */
   public int getType() {
     return m_Type;
