@@ -590,7 +590,7 @@ public class SetupGenerator
     result = (Serializable) new SerializedObject(original).getObject();
 
     for (i = 0; i < values.dimensions(); i++) {
-      cnt = PropertyPath.find(original, new Path(((AbstractPropertyParameter) m_Parameters[i]).getProperty()));
+      cnt = PropertyPath.find(result, new Path(((AbstractPropertyParameter) m_Parameters[i]).getProperty()));
       if (cnt != null)
 	setValue(
 	    result,
