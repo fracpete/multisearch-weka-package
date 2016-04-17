@@ -316,9 +316,8 @@ public abstract class AbstractSearch
    * Returns the performance score of a given item in the trace.
    *
    * @param index the index of the trace item to obtain
-   * @throws Exception
    */
-  public Double getTraceValue(int index) throws Exception {
+  public Double getTraceValue(int index) {
     return m_Trace.get(index).getValue();
   }
 

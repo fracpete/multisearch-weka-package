@@ -856,9 +856,8 @@ public class MultiSearch
    * Returns the performance score of a given item in the trace.
    * 
    * @param index the index of the trace item to obtain
-   * @throws Exception 
    */
-  public Double getTraceValue(int index) throws Exception {
+  public Double getTraceValue(int index) {
     return m_Algorithm.getTraceValue(index);
   }
 
@@ -930,7 +929,7 @@ public class MultiSearch
       if (m_Debug) {
 	result.append("\n\nTrace:\n");
 	for (i = 0; i < getTraceSize(); i++)
-	  result.append("\n" + (i+1) + ". " + getTraceClassifierAsCli(i));
+	  result.append("\n" + (i+1) + ". " + getTraceValue(i) + " = " + getTraceClassifierAsCli(i));
       }
     }
 
