@@ -27,6 +27,7 @@ import weka.core.Instances;
 import weka.core.SetupGenerator;
 import weka.core.setupgenerator.Point;
 
+import java.io.Serializable;
 import java.util.Random;
 
 /**
@@ -74,14 +75,12 @@ public class DefaultEvaluationTask
     Point<Object>	evals;
     Evaluation 		eval;
     Classifier 		classifier;
-    MultiSearch		multi;
     Performance		performance;
     boolean		completed;
 
     // setup
     evals      = m_Generator.evaluate(m_Values);
-    multi      = (MultiSearch) m_Generator.setup(m_Owner, evals);
-    classifier = multi.getClassifier();
+    classifier = (Classifier) m_Generator.setup((Serializable) m_Owner.getClassifier(), evals);
 
     // evaluate
     try {
@@ -112,12 +111,13 @@ public class DefaultEvaluationTask
 
     // store performance
     performance = new Performance(m_Values, m_Owner.getFactory().newWrapper(eval), m_Evaluation);
-    m_Owner.addPerformance(performance, m_Folds);
+    m_Owner.getAlgorithm().addPerformance(performance, m_Folds);
 
     // log
     m_Owner.log(performance + ": cached=false");
 
     // release slot
-    m_Owner.completedEvaluation(classifier, completed);
+    if (m_Owner.getAlgorithm() instanceof AbstractMultiThreadedSearch)
+      ((AbstractMultiThreadedSearch) m_Owner.getAlgorithm()).completedEvaluation(classifier, completed);
   }
 }

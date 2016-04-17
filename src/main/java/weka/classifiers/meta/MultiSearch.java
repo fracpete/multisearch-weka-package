@@ -26,11 +26,10 @@ import weka.classifiers.RandomizableSingleClassifierEnhancer;
 import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.meta.multisearch.AbstractEvaluationFactory;
 import weka.classifiers.meta.multisearch.AbstractEvaluationMetrics;
-import weka.classifiers.meta.multisearch.AbstractEvaluationTask;
+import weka.classifiers.meta.multisearch.AbstractSearch;
 import weka.classifiers.meta.multisearch.DefaultEvaluationFactory;
+import weka.classifiers.meta.multisearch.DefaultSearch;
 import weka.classifiers.meta.multisearch.Performance;
-import weka.classifiers.meta.multisearch.PerformanceCache;
-import weka.classifiers.meta.multisearch.PerformanceComparator;
 import weka.core.AdditionalMeasureProducer;
 import weka.core.Capabilities;
 import weka.core.Capabilities.Capability;
@@ -46,54 +45,37 @@ import weka.core.SetupGenerator;
 import weka.core.Summarizable;
 import weka.core.Tag;
 import weka.core.Utils;
-import weka.core.WekaException;
-import weka.core.converters.ConverterUtils.DataSource;
 import weka.core.setupgenerator.AbstractParameter;
 import weka.core.setupgenerator.MathParameter;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
-import weka.filters.Filter;
-import weka.filters.unsupervised.instance.Resample;
 
 import java.io.File;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.Serializable;
 import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
 import java.util.Vector;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  <!-- globalinfo-start -->
  * Performs a search of an arbitrary number of parameters of a classifier and chooses the best pair found for the actual filtering and training.<br>
- * The default MultiSearch is using the following FilteredClassifier setup:<br>
- *  - classifier: LinearRegression, searching for the "Ridge"<br>
- *  - filter: PLSFilter, searching for the "# of Components"<br>
- * The properties being explored are totally up to the user, it can be a mix of classifier and filter properties, or only classifier ones or only filter ones.<br>
+ * The default MultiSearch is using the following Classifier setup:<br>
+ *   LinearRegression, searching for the "Ridge"<br>
+ * The properties being explored are totally up to the user.<br>
  * <br>
- * Since the the MultiSearch classifier itself is used as the base object for the setups being generated, one has to prefix the properties with 'classifier.' (referring to MultiSearch's 'classifier' property).<br>
  * E.g., if you have a FilteredClassifier selected as base classifier, sporting a PLSFilter and you want to explore the number of PLS components, then your property will be made up of the following components:<br>
- *  - classifier: referring to MultiSearch's classifier property<br>
- *    i.e., the FilteredClassifier.<br>
  *  - filter: referring to the FilteredClassifier's property (= PLSFilter)<br>
  *  - numComponents: the actual property of the PLSFilter that we want to modify<br>
  * And assembled, the property looks like this:<br>
- *   classifier.filter.numComponents<br>
+ *   filter.numComponents<br>
  * <br>
- * The initial space is worked on with 2-fold CV to determine the values of the parameters for the selected type of evaluation (e.g., accuracy). The best point in the space is then taken as center and a 10-fold CV is performed with the adjacent parameters. If better parameters are found, then this will act as new center and another 10-fold CV will be performed (kind of hill-climbing). This process is repeated until no better pair is found or the best pair is on the border of the parameter space.<br>
- * The number of CV-folds for the initial and subsequent spaces can be adjusted, of course.<br>
  * <br>
- * Instead of using cross-validation, it is possible to specify test sets, for the initial space evaluation and the subsequent ones.<br>
+ * The best classifier setup can be accessed after the buildClassifier call via the getBestClassifier method.<br>
  * <br>
- * The outcome of a mathematical function (= double), MultiSearch will convert to integers (values are just cast to int), booleans (0 is false, otherwise true), float, char and long if necessary.<br>
- * Via a user-supplied 'list' of parameters (blank-separated), one can also set strings and selected tags (drop-down comboboxes in Weka's GenericObjectEditor). Classnames with options (e.g., classifiers with their options) are possible as well.<br>
- * <br>
- * The best classifier setup can be accessed after the buildClassifier call via the getBestClassifier method.
+ * The trace of setups evaluated can be accessed after the buildClassifier call as well, using the following methods:<br>
+ * - getTraceSize()<br>
+ * - getTraceValue(int)<br>
+ * - getTraceClassifierAsCli(int)
  * <br><br>
  <!-- globalinfo-end -->
  *
@@ -131,39 +113,13 @@ import java.util.concurrent.TimeUnit;
  *  A property search setup.
  * </pre>
  * 
- * <pre> -sample-size &lt;num&gt;
- *  The size (in percent) of the sample to search the inital space with.
- *  (default: 100)</pre>
+ * <pre> -algorithm "&lt;classname options&gt;"
+ *  A search algorithm.
+ * </pre>
  * 
  * <pre> -log-file &lt;filename&gt;
  *  The log file to log the messages to.
  *  (default: none)</pre>
- * 
- * <pre> -initial-folds &lt;num&gt;
- *  The number of cross-validation folds for the initial space.
- *  Numbers smaller than 2 turn off cross-validation and just
- *  perform evaluation on the training set.
- *  (default: 2)</pre>
- * 
- * <pre> -subsequent-folds &lt;num&gt;
- *  The number of cross-validation folds for the subsequent sub-spaces.
- *  Numbers smaller than 2 turn off cross-validation and just
- *  perform evaluation on the training set.
- *  (default: 10)</pre>
- * 
- * <pre> -initial-test-set &lt;filename&gt;
- *  The (optional) test set to use for the initial space.
- *  Gets ignored if pointing to a file. Overrides cross-validation.
- *  (default: .)</pre>
- * 
- * <pre> -subsequent-test-set &lt;filename&gt;
- *  The (optional) test set to use for the subsequent sub-spaces.
- *  Gets ignored if pointing to a file. Overrides cross-validation.
- *  (default: .)</pre>
- * 
- * <pre> -num-slots &lt;num&gt;
- *  Number of execution slots.
- *  (default 1 - i.e. no parallelism)</pre>
  * 
  * <pre> -S &lt;num&gt;
  *  Random number seed.
@@ -224,12 +180,6 @@ import java.util.concurrent.TimeUnit;
  * 
  <!-- options-end -->
  *
- * General notes:
- * <ul>
- *   <li>Turn the <i>debug</i> flag on in order to see some progress output in the
- *       console</li>
- * </ul>
- *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
  * @version $Revision: 4521 $
  */
@@ -243,9 +193,6 @@ public class MultiSearch
   /** the Classifier with the best setup. */
   protected Classifier m_BestClassifier;
 
-  /** the best values. */
-  protected Point<Object> m_Values = null;
-
   /** the evaluation factory to use. */
   protected AbstractEvaluationFactory m_Factory;
 
@@ -258,63 +205,14 @@ public class MultiSearch
   /** for generating the search parameters. */
   protected SetupGenerator m_Generator;
 
-  /** the sample size to search the initial space with. */
-  protected double m_SampleSize = 100;
-
   /** the log file to use. */
   protected File m_LogFile = new File(System.getProperty("user.dir"));
-
-  /** the parameter space. */
-  protected Space m_Space;
-
-  /** the cache for points in the space that got calculated
-   * (raw points in space, not evaluated ones!). */
-  protected PerformanceCache m_Cache;
-  
-  protected List<Entry<Integer, Point<Object>>> m_Trace;
-
-  /** whether all performances in the space are the same. */
-  protected boolean m_UniformPerformance = false;
 
   /** the default parameters. */
   protected AbstractParameter[] m_DefaultParameters;
 
-  /** number of cross-validation folds in the initial space. */
-  protected int m_InitialSpaceNumFolds = 2;
-
-  /** number of cross-validation folds in the subsequent spaces. */
-  protected int m_SubsequentSpaceNumFolds = 10;
-
-  /** the optional test set to use for the initial evaluation (overrides cross-validation, ignored if dir). */
-  protected File m_InitialSpaceTestSet = new File(".");
-
-  /** the optional test set to use for the subsequent evaluation (overrides cross-validation, ignored if dir). */
-  protected File m_SubsequentSpaceTestSet = new File(".");
-
-  /** The number of threads to have executing at any one time. */
-  protected int m_NumExecutionSlots = 1;
-
-  /** Pool of threads to train models with. */
-  protected transient ThreadPoolExecutor m_ExecutorPool;
-
-  /** The number of setups completed so far. */
-  protected int m_Completed;
-
-  /** The number of setups that experienced a failure of some sort
-   * during construction. */
-  protected int m_Failed;
-
-  /** the number of setups to evaluate. */
-  protected int m_NumSetups;
-
-  /** for storing the performances. */
-  protected Vector<Performance> m_Performances;
-
-  /** the optional test set to use for the initial evaluation. */
-  protected Instances m_InitialSpaceTestInst;
-
-  /** the optional test set to use for the subsequent evaluation. */
-  protected Instances m_SubsequentSpaceTestInst;
+  /** the search algorithm. */
+  protected AbstractSearch m_Algorithm;
 
   /**
    * the default constructor.
@@ -330,6 +228,7 @@ public class MultiSearch
     m_DefaultParameters = defaultSearchParameters();
     m_Generator.setBaseObject(this);
     m_Generator.setParameters(m_DefaultParameters);
+    m_Algorithm         = defaultAlgorithm();
 
     try {
       m_BestClassifier = AbstractClassifier.makeCopy(m_Classifier);
@@ -350,50 +249,27 @@ public class MultiSearch
     return
       "Performs a search of an arbitrary number of parameters of a classifier "
 	+ "and chooses the best pair found for the actual filtering and training.\n"
-	+ "The default MultiSearch is using the following FilteredClassifier setup:\n"
-	+ " - classifier: LinearRegression, searching for the \"Ridge\"\n"
-	+ " - filter: PLSFilter, searching for the \"# of Components\"\n"
-	+ "The properties being explored are totally up to the user, it can be a "
-	+ "mix of classifier and filter properties, or only classifier ones or "
-	+ "only filter ones.\n"
+	+ "The default MultiSearch is using the following Classifier setup:\n"
+	+ "  LinearRegression, searching for the \"Ridge\"\n"
+	+ "The properties being explored are totally up to the user.\n"
 	+ "\n"
-	+ "Since the the MultiSearch classifier itself is used as the base object "
-	+ "for the setups being generated, one has to prefix the properties with "
-	+ "'classifier.' (referring to MultiSearch's 'classifier' property).\n"
 	+ "E.g., if you have a FilteredClassifier selected as base classifier, "
 	+ "sporting a PLSFilter and you want to explore the number of PLS components, "
 	+ "then your property will be made up of the following components:\n"
-	+ " - classifier: referring to MultiSearch's classifier property\n"
-	+ "   i.e., the FilteredClassifier.\n"
 	+ " - filter: referring to the FilteredClassifier's property (= PLSFilter)\n"
 	+ " - numComponents: the actual property of the PLSFilter that we want to modify\n"
 	+ "And assembled, the property looks like this:\n"
-	+ "  classifier.filter.numComponents\n"
+	+ "  filter.numComponents\n"
 	+ "\n"
-	+ "The initial space is worked on with 2-fold CV to determine the values "
-	+ "of the parameters for the selected type of evaluation (e.g., "
-	+ "accuracy). The best point in the space is then taken as center and a "
-	+ "10-fold CV is performed with the adjacent parameters. If better parameters "
-	+ "are found, then this will act as new center and another 10-fold CV will "
-	+ "be performed (kind of hill-climbing). This process is repeated until "
-	+ "no better pair is found or the best pair is on the border of the parameter "
-	+ "space.\n"
-	+ "The number of CV-folds for the initial and subsequent spaces can be "
-	+ "adjusted, of course.\n"
-	+ "\n"
-	+ "Instead of using cross-validation, it is possible to specify test sets, "
-	+ "for the initial space evaluation and the subsequent ones.\n"
-	+ "\n"
-	+ "The outcome of a mathematical function (= double), MultiSearch will convert "
-	+ "to integers (values are just cast to int), booleans (0 is false, otherwise "
-	+ "true), float, char and long if necessary.\n"
-	+ "Via a user-supplied 'list' of parameters (blank-separated), one can also "
-	+ "set strings and selected tags (drop-down comboboxes in Weka's "
-	+ "GenericObjectEditor). Classnames with options (e.g., classifiers with "
-	+ "their options) are possible as well.\n"
 	+ "\n"
 	+ "The best classifier setup can be accessed after the buildClassifier "
-	+ "call via the getBestClassifier method.";
+	+ "call via the getBestClassifier method.\n"
+	+ "\n"
+        + "The trace of setups evaluated can be accessed after the buildClassifier "
+	+ "call as well, using the following methods:\n"
+        + "- getTraceSize()\n"
+        + "- getTraceValue(int)\n"
+        + "- getTraceClassifierAsCli(int)";
   }
 
   /**
@@ -433,7 +309,7 @@ public class MultiSearch
     result = new AbstractParameter[1];
 
     param = new MathParameter();
-    param.setProperty("classifier.ridge");
+    param.setProperty("ridge");
     param.setMin(-10);
     param.setMax(+5);
     param.setStep(1);
@@ -486,45 +362,13 @@ public class MultiSearch
       "search", 1, "-search \"<classname options>\""));
 
     result.addElement(new Option(
-      "\tThe size (in percent) of the sample to search the inital space with.\n"
-	+ "\t(default: 100)",
-      "sample-size", 1, "-sample-size <num>"));
+      "\tA search algorithm.\n",
+      "algorithm", 1, "-algorithm \"<classname options>\""));
 
     result.addElement(new Option(
       "\tThe log file to log the messages to.\n"
 	+ "\t(default: none)",
       "log-file", 1, "-log-file <filename>"));
-
-    result.addElement(new Option(
-      "\tThe number of cross-validation folds for the initial space.\n"
-	+ "\tNumbers smaller than 2 turn off cross-validation and just\n"
-	+ "\tperform evaluation on the training set.\n"
-	+ "\t(default: 2)",
-      "initial-folds", 1, "-initial-folds <num>"));
-
-    result.addElement(new Option(
-      "\tThe number of cross-validation folds for the subsequent sub-spaces.\n"
-	+ "\tNumbers smaller than 2 turn off cross-validation and just\n"
-	+ "\tperform evaluation on the training set.\n"
-	+ "\t(default: 10)",
-      "subsequent-folds", 1, "-subsequent-folds <num>"));
-
-    result.addElement(new Option(
-      "\tThe (optional) test set to use for the initial space.\n"
-	+ "\tGets ignored if pointing to a file. Overrides cross-validation.\n"
-	+ "\t(default: .)",
-      "initial-test-set", 1, "-initial-test-set <filename>"));
-
-    result.addElement(new Option(
-      "\tThe (optional) test set to use for the subsequent sub-spaces.\n"
-	+ "\tGets ignored if pointing to a file. Overrides cross-validation.\n"
-	+ "\t(default: .)",
-      "subsequent-test-set", 1, "-subsequent-test-set <filename>"));
-
-    result.addElement(new Option(
-      "\tNumber of execution slots.\n"
-	+ "\t(default 1 - i.e. no parallelism)",
-      "num-slots", 1, "-num-slots <num>"));
 
     en = super.listOptions();
     while (en.hasMoreElements())
@@ -554,26 +398,11 @@ public class MultiSearch
       result.add(getCommandline(m_Generator.getParameters()[i]));
     }
 
-    result.add("-sample-size");
-    result.add("" + getSampleSizePercent());
+    result.add("-algorithm");
+    result.add(getCommandline(m_Algorithm));
 
     result.add("-log-file");
     result.add("" + getLogFile());
-
-    result.add("-initial-folds");
-    result.add("" + getInitialSpaceNumFolds());
-
-    result.add("-subsequent-folds");
-    result.add("" + getSubsequentSpaceNumFolds());
-
-    result.add("-initial-test-set");
-    result.add("" + getInitialSpaceTestSet());
-
-    result.add("-subsequent-test-set");
-    result.add("" + getSubsequentSpaceTestSet());
-
-    result.add("-num-slots");
-    result.add("" + getNumExecutionSlots());
 
     options = super.getOptions();
     for (i = 0; i < options.length; i++)
@@ -622,47 +451,22 @@ public class MultiSearch
     }
     m_Generator.setParameters(params);
 
-    tmpStr = Utils.getOption("sample-size", options);
-    if (tmpStr.length() != 0)
-      setSampleSizePercent(Double.parseDouble(tmpStr));
-    else
-      setSampleSizePercent(100);
+    tmpStr = Utils.getOption("algorithm", options);
+    if (!tmpStr.isEmpty()) {
+      tmpOptions = Utils.splitOptions(search.get(i));
+      tmpStr = tmpOptions[0];
+      tmpOptions[0] = "";
+      setAlgorithm((AbstractSearch) Utils.forName(AbstractSearch.class, tmpStr, tmpOptions));
+    }
+    else {
+      setAlgorithm(new DefaultSearch());
+    }
 
     tmpStr = Utils.getOption("log-file", options);
     if (tmpStr.length() != 0)
       setLogFile(new File(tmpStr));
     else
       setLogFile(new File(System.getProperty("user.dir")));
-
-    tmpStr = Utils.getOption("initial-folds", options);
-    if (tmpStr.length() != 0)
-      setInitialSpaceNumFolds(Integer.parseInt(tmpStr));
-    else
-      setInitialSpaceNumFolds(2);
-
-    tmpStr = Utils.getOption("subsequent-folds", options);
-    if (tmpStr.length() != 0)
-      setSubsequentSpaceNumFolds(Integer.parseInt(tmpStr));
-    else
-      setSubsequentSpaceNumFolds(10);
-
-    tmpStr = Utils.getOption("initial-test-set", options);
-    if (tmpStr.length() != 0)
-      setInitialSpaceTestSet(new File(tmpStr));
-    else
-      setInitialSpaceTestSet(new File(System.getProperty("user.dir")));
-
-    tmpStr = Utils.getOption("subsequent-test-set", options);
-    if (tmpStr.length() != 0)
-      setSubsequentSpaceTestSet(new File(tmpStr));
-    else
-      setSubsequentSpaceTestSet(new File(System.getProperty("user.dir")));
-
-    tmpStr = Utils.getOption("num-slots", options);
-    if (tmpStr.length() != 0)
-      setNumExecutionSlots(Integer.parseInt(tmpStr));
-    else
-      setNumExecutionSlots(1);
 
     super.setOptions(options);
   }
@@ -717,6 +521,47 @@ public class MultiSearch
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
+  public String algorithmTipText() {
+    return "Defines the search algorithm.";
+  }
+
+  /**
+   * Sets the search algorithm.
+   *
+   * @param value	the algorithm
+   */
+  public void setAlgorithm(AbstractSearch value) {
+    m_Algorithm = value;
+  }
+
+  /**
+   * Returns the search algorithm.
+   *
+   * @return		the algorithm
+   */
+  public AbstractSearch getAlgorithm() {
+    return m_Algorithm;
+  }
+
+  /**
+   * Creates the default search algorithm.
+   *
+   * @return	the algorithm
+   */
+  public AbstractSearch defaultAlgorithm() {
+    DefaultSearch	result;
+
+    result = new DefaultSearch();
+
+    return result;
+  }
+
+  /**
+   * Returns the tip text for this property.
+   *
+   * @return 		tip text for this property suitable for
+   * 			displaying in the explorer/experimenter gui
+   */
   public String evaluationTipText() {
     return
       "Sets the criterion for evaluating the classifier performance and "
@@ -758,34 +603,6 @@ public class MultiSearch
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
-  public String sampleSizePercentTipText() {
-    return "The sample size (in percent) to use in the initial space search.";
-  }
-
-  /**
-   * Gets the sample size for the initial space search.
-   *
-   * @return the sample size.
-   */
-  public double getSampleSizePercent() {
-    return m_SampleSize;
-  }
-
-  /**
-   * Sets the sample size for the initial space search.
-   *
-   * @param value the sample size for the initial space search.
-   */
-  public void setSampleSizePercent(double value) {
-    m_SampleSize = value;
-  }
-
-  /**
-   * Returns the tip text for this property.
-   *
-   * @return 		tip text for this property suitable for
-   * 			displaying in the explorer/experimenter gui
-   */
   public String logFileTipText() {
     return "The log file to log the messages to.";
   }
@@ -809,166 +626,21 @@ public class MultiSearch
   }
 
   /**
-   * Returns the tip text for this property.
-   *
-   * @return 		tip text for this property suitable for
-   * 			displaying in the explorer/experimenter gui
-   */
-  public String initialSpaceNumFoldsTipText() {
-    return
-      "The number of cross-validation folds when evaluating the initial "
-	+ "space; values smaller than 2 turn cross-validation off and simple "
-	+ "evaluation on the training set is performed.";
-  }
-
-  /**
-   * Gets the number of CV folds for the initial space.
-   *
-   * @return the number of folds.
-   */
-  public int getInitialSpaceNumFolds() {
-    return m_InitialSpaceNumFolds;
-  }
-
-  /**
-   * Sets the number of CV folds for the initial space.
-   *
-   * @param value the number of folds.
-   */
-  public void setInitialSpaceNumFolds(int value) {
-    m_InitialSpaceNumFolds = value;
-  }
-
-  /**
-   * Returns the tip text for this property.
-   *
-   * @return 		tip text for this property suitable for
-   * 			displaying in the explorer/experimenter gui
-   */
-  public String subsequentSpaceNumFoldsTipText() {
-    return
-      "The number of cross-validation folds when evaluating the subsequent "
-	+ "sub-spaces; values smaller than 2 turn cross-validation off and simple "
-	+ "evaluation on the training set is performed.";
-  }
-
-  /**
-   * Gets the number of CV folds for the sub-sequent sub-spaces.
-   *
-   * @return the number of folds.
-   */
-  public int getSubsequentSpaceNumFolds() {
-    return m_SubsequentSpaceNumFolds;
-  }
-
-  /**
-   * Sets the number of CV folds for the sub-sequent sub-spaces.
-   *
-   * @param value the number of folds.
-   */
-  public void setSubsequentSpaceNumFolds(int value) {
-    m_SubsequentSpaceNumFolds = value;
-  }
-
-  /**
-   * Returns the tip text for this property.
-   *
-   * @return 		tip text for this property suitable for
-   * 			displaying in the explorer/experimenter gui
-   */
-  public String initialSpaceTestSetTipText() {
-    return
-      "The (optional) test set to use for evaluating the initial search space; "
-      + "overrides cross-validation; gets ignored if pointing to a directory.";
-  }
-
-  /**
-   * Gets the test set to use for the initial space.
-   *
-   * @return the number of folds.
-   */
-  public File getInitialSpaceTestSet() {
-    return m_InitialSpaceTestSet;
-  }
-
-  /**
-   * Sets the test set to use folds for the initial space.
-   *
-   * @param value the test set, ignored if dir.
-   */
-  public void setInitialSpaceTestSet(File value) {
-    m_InitialSpaceTestSet = value;
-  }
-
-  /**
-   * Returns the tip text for this property.
-   *
-   * @return 		tip text for this property suitable for
-   * 			displaying in the explorer/experimenter gui
-   */
-  public String subsequentSpaceTestSetTipText() {
-    return
-      "The (optional) test set to use for evaluating the subsequent search sub-spaces; "
-      + "overrides cross-validation; gets ignored if pointing to a directory.";
-  }
-
-  /**
-   * Gets the test set to use for the sub-sequent sub-spaces.
-   *
-   * @return the test set, ignored if dir.
-   */
-  public File getSubsequentSpaceTestSet() {
-    return m_SubsequentSpaceTestSet;
-  }
-
-  /**
-   * Sets the test set to use for the sub-sequent sub-spaces.
-   *
-   * @param value the test set, ignored if dir.
-   */
-  public void setSubsequentSpaceTestSet(File value) {
-    m_SubsequentSpaceTestSet = value;
-  }
-
-  /**
-   * Returns the tip text for this property.
-   *
-   * @return 		tip text for this property suitable for
-   * 			displaying in the explorer/experimenter gui
-   */
-  public String numExecutionSlotsTipText() {
-    return "The number of execution slots (threads) to use for " +
-      "constructing the ensemble.";
-  }
-
-  /**
-   * Set the number of execution slots (threads) to use for building the
-   * members of the ensemble.
-   *
-   * @param value 	the number of slots to use.
-   */
-  public void setNumExecutionSlots(int value) {
-    if (value >= 1)
-      m_NumExecutionSlots = value;
-  }
-
-  /**
-   * Get the number of execution slots (threads) to use for building
-   * the members of the ensemble.
-   *
-   * @return 		the number of slots to use
-   */
-  public int getNumExecutionSlots() {
-    return m_NumExecutionSlots;
-  }
-
-  /**
    * returns the best Classifier setup.
    *
    * @return		the best Classifier setup
    */
   public Classifier getBestClassifier() {
     return m_BestClassifier;
+  }
+
+  /**
+   * Returns the setup generator.
+   *
+   * @return		the generator
+   */
+  public SetupGenerator getGenerator() {
+    return m_Generator;
   }
 
   /**
@@ -982,9 +654,9 @@ public class MultiSearch
 
     result = new Vector();
 
-    if (m_Values != null) {
-      for (i = 0; i < m_Values.dimensions(); i++) {
-        if (m_Values.getValue(i) instanceof Double)
+    if (getValues() != null) {
+      for (i = 0; i < getValues().dimensions(); i++) {
+        if (getValues().getValue(i) instanceof Double)
           result.add("measure-" + i);
       }
     }
@@ -1024,12 +696,21 @@ public class MultiSearch
   }
 
   /**
+   * Returns the evaluation metrics.
+   *
+   * @return		the metrics
+   */
+  public AbstractEvaluationMetrics getMetrics() {
+    return m_Metrics;
+  }
+
+  /**
    * returns the parameter values that were found to work best.
    *
    * @return		the best parameter combination
    */
   public Point<Object> getValues() {
-    return m_Values;
+    return m_Algorithm.getValues();
   }
 
   /**
@@ -1115,41 +796,6 @@ public class MultiSearch
   }
 
   /**
-   * replaces the current option in the options array with a new value.
-   *
-   * @param options	the current options
-   * @param option	the option to set a new value for
-   * @param value	the value to set
-   * @return		the updated array
-   * @throws Exception	if something goes wrong
-   */
-  protected String[] updateOption(String[] options, String option, String value)
-    throws Exception {
-
-    String[]		result;
-    Vector		tmpOptions;
-    int			i;
-
-    // remove old option
-    Utils.getOption(option, options);
-
-    // add option with new value at the beginning (to avoid clashes with "--")
-    tmpOptions = new Vector();
-    tmpOptions.add("-" + option);
-    tmpOptions.add("" + value);
-
-    // move options into vector
-    for (i = 0; i < options.length; i++) {
-      if (options[i].length() != 0)
-	tmpOptions.add(options[i]);
-    }
-
-    result = (String[]) tmpOptions.toArray(new String[tmpOptions.size()]);
-
-    return result;
-  }
-
-  /**
    * generates a table string for all the performances in the space and returns
    * that.
    *
@@ -1158,7 +804,7 @@ public class MultiSearch
    * @param type		the type of performance
    * @return			the table string
    */
-  protected String logPerformances(Space space, Vector<Performance> performances, Tag type) {
+  public String logPerformances(Space space, Vector<Performance> performances, Tag type) {
     StringBuffer	result;
     int			i;
 
@@ -1182,7 +828,7 @@ public class MultiSearch
    * @param space		the current space to align the performances to
    * @param performances	the performances to align
    */
-  protected void logPerformances(Space space, Vector<Performance> performances) {
+  public void logPerformances(Space space, Vector<Performance> performances) {
     int		i;
 
     for (i = 0; i < m_Metrics.getTags().length; i++)
@@ -1190,337 +836,31 @@ public class MultiSearch
   }
 
   /**
-   * Start the pool of execution threads.
-   */
-  protected void startExecutorPool() {
-    stopExecutorPool();
-
-    log("Starting thread pool with " + m_NumExecutionSlots + " slots...");
-
-    m_ExecutorPool = new ThreadPoolExecutor(
-      m_NumExecutionSlots, m_NumExecutionSlots,
-      120, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-  }
-
-  /**
-   * Stops the ppol of execution threads.
-   */
-  protected void stopExecutorPool() {
-    log("Shutting down thread pool...");
-
-    if (m_ExecutorPool != null)
-      m_ExecutorPool.shutdownNow();
-
-    m_ExecutorPool = null;
-  }
-
-  /**
-   * Helper method used for blocking.
-   *
-   * @param doBlock	whether to block or not
-   */
-  protected synchronized void block(boolean doBlock) {
-    if (doBlock) {
-      try {
-	wait();
-      }
-      catch (InterruptedException ex) {
-	// ignored
-      }
-    }
-    else {
-      notifyAll();
-    }
-  }
-
-  /**
-   * Records the completion of the training of a single classifier. Unblocks if
-   * all classifiers have been trained.
-   *
-   * @param obj		the classifier or setup values that was attempted to train
-   * @param success 	whether the classifier trained successfully
-   */
-  public synchronized void completedEvaluation(Object obj, boolean success) {
-    if (!success) {
-      m_Failed++;
-      if (m_Debug) {
-	if (obj instanceof Classifier)
-	  System.err.println("Training failed: " + getCommandline(obj));
-	else
-	  System.err.println("Training failed: " + obj);
-      }
-    }
-    else {
-      m_Completed++;
-    }
-
-    if (m_Completed + m_Failed == m_NumSetups) {
-      if (m_Failed > 0) {
-	if (m_Debug)
-	  System.err.println("Problem building classifiers - some failed to be trained.");
-      }
-      block(false);
-    }
-  }
-
-  /**
-   * Adds the performance to the cache and the current list of performances.
-   * Does nothing if at least one setup failed.
-   *
-   * @param performance	the performance to add
-   * @param folds	the number of folds
-   * @see		#m_Failed
-   */
-  public void addPerformance(Performance performance, int folds) {
-    if (m_Failed > 0)
-      return;
-
-    m_Performances.add(performance);
-    m_Cache.add(folds, performance);
-  }
-
-  /**
    * Returns the size of m_Trace, which is technically the amount of
    * setups that where tested in order to find the best. 
    */
   public int getTraceSize() {
-    return m_Trace.size();
+    return m_Algorithm.getTraceSize();
   }
   
   /**
    * Returns the CLI string of a given item in the trace.
    * 
-   * @pre index < getTraceSize()
    * @param index the index of the trace item to obtain
    * @throws Exception 
    */
   public String getTraceClassifierAsCli(int index) throws Exception {
-	MultiSearch multi = (MultiSearch) m_Generator.setup(this, m_Trace.get(index).getValue());
-    return getCommandline(multi.getClassifier());
+    return m_Algorithm.getTraceClassifierAsCli(index);
   }
   
   /**
    * Returns the performance score of a given item in the trace.
    * 
-   * @pre index < getTraceSize(), m_Cache contains the specified item
    * @param index the index of the trace item to obtain
    * @throws Exception 
    */
   public Double getTraceValue(int index) throws Exception {
-    Entry<Integer, Point<Object>> currentItem = m_Trace.get(index);
-    if (m_Cache.isCached(currentItem.getKey(), currentItem.getValue())) {
-      Performance performance = m_Cache.get(currentItem.getKey(), currentItem.getValue());
-      return performance.getPerformance();
-    } else {
-      throw new Exception("Setup not found in cache. ");
-    }
-  }
-
-  /**
-   * determines the best point for the given space, using CV with
-   * specified number of folds.
-   *
-   * @param space	the space to work on
-   * @param train	the training data to work with
-   * @param test	the test data to use, null if to use cross-validation
-   * @param folds	the number of folds for cross-validation, if &lt;2 then
-   * 			evaluation based on the training set is used
-   * @return		the best point (not actual parameters!)
-   * @throws Exception	if setup or training fails
-   */
-  protected Point<Object> determineBestInSpace(Space space, Instances train, Instances test, int folds) throws Exception {
-    Point<Object>		result;
-    int				i;
-    Enumeration<Point<Object>>	enm;
-    Performance			performance;
-    Point<Object>		values;
-    boolean			allCached;
-    Performance			p1;
-    Performance			p2;
-    AbstractEvaluationTask 	newTask;
-
-    m_Performances.clear();
-
-    if (folds >= 2)
-      log("Determining best values with " + folds + "-fold CV in space:\n" + space + "\n");
-    else
-      log("Determining best values with evaluation on training set in space:\n" + space + "\n");
-
-    enm         = space.values();
-    allCached   = true;
-    m_Failed    = 0;
-    m_Completed = 0;
-    m_NumSetups = space.size();
-
-    while (enm.hasMoreElements()) {
-      values = enm.nextElement();
-      m_Trace.add(new AbstractMap.SimpleEntry<Integer,Point<Object>>(folds,values));
-
-      // already calculated?
-      if (m_Cache.isCached(folds, values)) {
-	performance = m_Cache.get(folds, values);
-	m_Performances.add(performance);
-	log(performance + ": cached=true");
-	m_Completed++;
-      }
-      else {
-	allCached = false;
-	newTask   = m_Factory.newTask(this, train, test, m_Generator, values, folds, m_Evaluation);
-	m_ExecutorPool.execute(newTask);
-      }
-    }
-
-    // wait for execution to finish
-    if (m_Completed + m_Failed < m_NumSetups)
-      block(true);
-
-    if (allCached) {
-      log("All points were already cached - abnormal state!");
-      throw new IllegalStateException("All points were already cached - abnormal state!");
-    }
-
-    if (m_Failed > 0)
-      throw new WekaException("Failed to evaluate " + m_Failed + " setups!");
-
-    // sort list
-    Collections.sort(m_Performances, new PerformanceComparator(m_Evaluation, m_Metrics));
-
-    result = m_Performances.firstElement().getValues();
-
-    // check whether all performances are the same
-    m_UniformPerformance = true;
-    p1 = m_Performances.get(0);
-    for (i = 1; i < m_Performances.size(); i++) {
-      p2 = m_Performances.get(i);
-      if (p2.getPerformance(m_Evaluation) != p1.getPerformance(m_Evaluation)) {
-	m_UniformPerformance = false;
-	break;
-      }
-    }
-    if (m_UniformPerformance)
-      log("All performances are the same!");
-
-    logPerformances(space, m_Performances);
-    log("\nBest performance:\n" + m_Performances.firstElement());
-
-    m_Performances.clear();
-
-    return result;
-  }
-
-  /**
-   * returns the best point in the space.
-   *
-   * @param inst	the training data
-   * @return 		the best point (not evaluated parameters!)
-   * @throws Exception 	if something goes wrong
-   */
-  protected Point<Object> findBest(Instances inst) throws Exception {
-    Point<Integer>	center;
-    Space		neighborSpace;
-    boolean		finished;
-    Point<Object>	evals;
-    Point<Object>	result;
-    Point<Object>	resultOld;
-    int			iteration;
-    Instances		sample;
-    Resample		resample;
-    MultiSearch		multi;
-    m_Trace = new ArrayList<Entry<Integer,Point<Object>>>();
-
-    log("Step 1:\n");
-
-    // generate sample?
-    if (getSampleSizePercent() == 100) {
-      sample = inst;
-    }
-    else {
-      log("Generating sample (" + getSampleSizePercent() + "%)");
-      resample = new Resample();
-      resample.setRandomSeed(getSeed());
-      resample.setSampleSizePercent(getSampleSizePercent());
-      resample.setInputFormat(inst);
-      sample = Filter.useFilter(inst, resample);
-    }
-
-    iteration            = 0;
-    m_UniformPerformance = false;
-
-    // find first center
-    log("\n=== Initial space - Start ===");
-    result = determineBestInSpace(m_Space, sample, m_InitialSpaceTestInst, m_InitialSpaceNumFolds);
-    log("\nResult of Step 1: " + result + "\n");
-    log("=== Initial space - End ===\n");
-
-    finished = m_UniformPerformance;
-
-    if (!finished) {
-      do {
-	iteration++;
-	resultOld = (Point<Object>) result.clone();
-	center    = m_Space.getLocations(result);
-	// on border? -> finished
-	if (m_Space.isOnBorder(center)) {
-	  log("Center is on border of space.");
-	  finished = true;
-	}
-
-	// new space with current best one at center and immediate neighbors
-	// around it
-	if (!finished) {
-	  neighborSpace = m_Space.subspace(center);
-	  result = determineBestInSpace(neighborSpace, sample, m_SubsequentSpaceTestInst, m_SubsequentSpaceNumFolds);
-	  log("\nResult of Step 2/Iteration " + (iteration) + ":\n" + result);
-	  finished = m_UniformPerformance;
-
-	  // no improvement?
-	  if (result.equals(resultOld)) {
-	    finished = true;
-	    log("\nNo better point found.");
-	  }
-	}
-      }
-      while (!finished);
-    }
-
-    log("\nFinal result:" + result);
-    evals = m_Generator.evaluate(result);
-    multi = (MultiSearch) m_Generator.setup(this, evals);
-    log("Classifier: " + getCommandline(multi.getClassifier()));
-
-    return result;
-  }
-
-  /**
-   * Loads test data, if required.
-   *
-   * @param data	the current training data
-   * @throws Exception	if test sets are not compatible with training data
-   */
-  protected void loadTestData(Instances data) throws Exception {
-    String		msg;
-
-    m_InitialSpaceTestInst = null;
-    if (m_InitialSpaceTestSet.exists() && !m_InitialSpaceTestSet.isDirectory()) {
-      m_InitialSpaceTestInst = DataSource.read(m_InitialSpaceTestSet.getAbsolutePath());
-      m_InitialSpaceTestInst.setClassIndex(data.classIndex());
-      msg = data.equalHeadersMsg(m_InitialSpaceTestInst);
-      if (msg != null)
-	throw new IllegalArgumentException("Test set for initial space not compatible with training dta:\n" +  msg);
-      m_InitialSpaceTestInst.deleteWithMissingClass();
-      log("Using test set for initial space: " + m_InitialSpaceTestSet);
-    }
-
-    m_SubsequentSpaceTestInst = null;
-    if (m_SubsequentSpaceTestSet.exists() && !m_SubsequentSpaceTestSet.isDirectory()) {
-      m_SubsequentSpaceTestInst = DataSource.read(m_SubsequentSpaceTestSet.getAbsolutePath());
-      m_SubsequentSpaceTestInst.setClassIndex(data.classIndex());
-      msg = data.equalHeadersMsg(m_SubsequentSpaceTestInst);
-      if (msg != null)
-	throw new IllegalArgumentException("Test set for subsequent sub-spaces not compatible with training dta:\n" +  msg);
-      m_SubsequentSpaceTestInst.deleteWithMissingClass();
-      log("Using test set for subsequent sub-spaces: " + m_InitialSpaceTestSet);
-    }
+    return m_Algorithm.getTraceValue(index);
   }
 
   /**
@@ -1530,9 +870,6 @@ public class MultiSearch
    * @throws Exception  if something goes wrong
    */
   public void buildClassifier(Instances data) throws Exception {
-    Point<Object>	evals;
-    MultiSearch		multi;
-
     // can classifier handle the data?
     getCapabilities().testWithFail(data);
 
@@ -1540,42 +877,17 @@ public class MultiSearch
     data = new Instances(data);
     data.deleteWithMissingClass();
 
-    log("\n---> start");
-
-    // test data
-    loadTestData(data);
-
-    m_Cache        = new PerformanceCache();
-    m_Performances = new Vector<Performance>();
-    startExecutorPool();
-
-    log("\n---> init search space");
-
-    // build space
-    m_Generator.reset();
-    m_Space = m_Generator.getSpace();
-
-    log("\n"
-      + getClass().getName() + "\n"
-      + getClass().getName().replaceAll(".", "=") + "\n"
-      + "Options: " + Utils.joinOptions(getOptions()) + "\n");
-
-    // find best
-    m_Values = findBest(new Instances(data));
-    stopExecutorPool();
-
-    // setup best configurations
-    evals            = m_Generator.evaluate(m_Values);
-    multi            = (MultiSearch) m_Generator.setup(this, evals);
-    m_BestClassifier = multi.getClassifier();
+    m_Generator.setBaseObject((Serializable) getClassifier());
+    m_Algorithm.setOwner(this);
+    m_BestClassifier = m_Algorithm.search(data);
 
     // train classifier
-    log("\n---> train best");
+    log("\n---> train best - start");
     log(Utils.toCommandLine(m_BestClassifier));
     m_Classifier = AbstractClassifier.makeCopy(m_BestClassifier);
     m_Classifier.buildClassifier(data);
 
-    log("\n---> end");
+    log("\n---> train best - end");
   }
 
   /**
@@ -1600,9 +912,7 @@ public class MultiSearch
     String	result;
     int		i;
 
-    result = "";
-
-    if (m_Values == null) {
+    if (getValues() == null) {
       result = "No search performed yet.";
     }
     else {

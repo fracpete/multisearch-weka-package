@@ -1,3 +1,5 @@
 # Extensions for weka.classifiers.meta.MultiSearch
 weka.core.setupgenerator.AbstractParameter=weka.gui.GenericObjectEditor
 weka.core.setupgenerator.AbstractParameter[]=weka.gui.GenericArrayEditor
+weka.classifiers.meta.multisearch.AbstractSearch=weka.gui.GenericObjectEditor
+weka.classifiers.meta.multisearch.AbstractSearch[]=weka.gui.GenericArrayEditor

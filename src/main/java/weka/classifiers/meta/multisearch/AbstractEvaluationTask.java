@@ -102,7 +102,8 @@ public abstract class AbstractEvaluationTask
       System.err.println("Encountered exception while evaluating classifier, skipping!");
       System.err.println("- Values: " + m_Values);
       e.printStackTrace();
-      m_Owner.completedEvaluation(m_Values, false);
+      if (m_Owner.getAlgorithm() instanceof AbstractMultiThreadedSearch)
+        ((AbstractMultiThreadedSearch) m_Owner.getAlgorithm()).completedEvaluation(m_Values, false);
     }
 
     cleanUp();
