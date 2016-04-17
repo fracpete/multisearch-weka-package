@@ -15,7 +15,7 @@
 
 /*
  * Space.java
- * Copyright (C) 2008 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
@@ -23,8 +23,6 @@ package weka.core.setupgenerator;
 import java.io.Serializable;
 import java.util.Enumeration;
 import java.util.Vector;
-
-import weka.classifiers.meta.MultiSearch;
 
 /**
  * Represents a multidimensional value space.
@@ -76,8 +74,6 @@ public class Space
    *
    * @param dimension		the dimension index
    * @return			the type of the dimension
-   * @see			MultiSearch#TYPE_FUNCTION
-   * @see			MultiSearch#TYPE_LIST
    */
   public int getType(int dimension) {
     return getDimension(dimension).getType();
