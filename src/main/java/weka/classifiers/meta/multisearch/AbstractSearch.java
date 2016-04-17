@@ -31,6 +31,7 @@ import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
 
 import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -46,7 +47,7 @@ import java.util.Vector;
 public abstract class AbstractSearch
   implements Serializable, Cloneable, OptionHandler {
 
-  protected List<Entry<Integer, Point<Object>>> m_Trace;
+  protected List<Entry<Classifier, Double>> m_Trace;
 
   /** the owner. */
   protected transient MultiSearch m_Owner;
@@ -250,6 +251,21 @@ public abstract class AbstractSearch
     m_Owner.logPerformances(space, performances);
   }
 
+  protected void addTrace(Performance performance) {
+    Point<Object>	evals;
+    Classifier		cls;
+
+    try {
+      evals = m_Owner.getGenerator().evaluate(performance.getValues());
+      cls = (Classifier) m_Owner.getGenerator().setup((Serializable) m_Owner.getClassifier(), evals);
+      m_Trace.add(new AbstractMap.SimpleEntry<Classifier, Double>(cls, performance.getPerformance()));
+    }
+    catch (Exception e) {
+      System.err.println("Failed to store trace for performance: " + performance);
+      e.printStackTrace();
+    }
+  }
+
   /**
    * Adds the performance to the cache and the current list of performances.
    * Does nothing if at least one setup failed.
@@ -259,11 +275,15 @@ public abstract class AbstractSearch
    * @see		#m_Failed
    */
   public void addPerformance(Performance performance, int folds) {
+    Point<Object>	evals;
+    Classifier		cls;
+
     if (m_Failed > 0)
       return;
 
     m_Performances.add(performance);
     m_Cache.add(folds, performance);
+    addTrace(performance);
   }
 
   /**
@@ -287,12 +307,9 @@ public abstract class AbstractSearch
    * Returns the CLI string of a given item in the trace.
    *
    * @param index the index of the trace item to obtain
-   * @throws Exception
    */
-  public String getTraceClassifierAsCli(int index) throws Exception {
-    Classifier result = (Classifier) getOwner().getGenerator().setup(
-      (Serializable) getOwner().getClassifier(), m_Trace.get(index).getValue());
-    return getCommandline(result);
+  public String getTraceClassifierAsCli(int index) {
+    return getCommandline(m_Trace.get(index).getKey());
   }
 
   /**
@@ -302,14 +319,7 @@ public abstract class AbstractSearch
    * @throws Exception
    */
   public Double getTraceValue(int index) throws Exception {
-    Entry<Integer, Point<Object>> currentItem = m_Trace.get(index);
-    if (m_Cache.isCached(currentItem.getKey(), currentItem.getValue())) {
-      Performance performance = m_Cache.get(currentItem.getKey(), currentItem.getValue());
-      return performance.getPerformance();
-    }
-    else {
-      throw new Exception("Setup not found in cache. ");
-    }
+    return m_Trace.get(index).getValue();
   }
 
   /**
@@ -348,7 +358,7 @@ public abstract class AbstractSearch
   public void preSearch(Instances data) throws Exception {
     m_Cache        = new PerformanceCache();
     m_Performances = new Vector<Performance>();
-    m_Trace        = new ArrayList<Entry<Integer,Point<Object>>>();
+    m_Trace        = new ArrayList<Entry<Classifier, Double>>();
 
     m_Owner.getGenerator().reset();
     m_Space = m_Owner.getGenerator().getSpace();

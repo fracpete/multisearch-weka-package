@@ -35,7 +35,6 @@ import weka.filters.unsupervised.instance.Resample;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -520,12 +519,12 @@ public class DefaultSearch
 
     while (enm.hasMoreElements()) {
       values = enm.nextElement();
-      m_Trace.add(new AbstractMap.SimpleEntry<Integer,Point<Object>>(folds,values));
 
       // already calculated?
       if (m_Cache.isCached(folds, values)) {
 	performance = m_Cache.get(folds, values);
 	m_Performances.add(performance);
+	addTrace(performance);
 	log(performance + ": cached=true");
 	m_Completed++;
       }
@@ -593,7 +592,7 @@ public class DefaultSearch
     Resample 		resample;
     Classifier		cls;
 
-    m_Trace = new ArrayList<Entry<Integer,Point<Object>>>();
+    m_Trace = new ArrayList<Entry<Classifier, Double>>();
 
     log("Step 1:\n");
 

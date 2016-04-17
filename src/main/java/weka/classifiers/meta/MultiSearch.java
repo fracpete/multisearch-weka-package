@@ -847,9 +847,8 @@ public class MultiSearch
    * Returns the CLI string of a given item in the trace.
    * 
    * @param index the index of the trace item to obtain
-   * @throws Exception 
    */
-  public String getTraceClassifierAsCli(int index) throws Exception {
+  public String getTraceClassifierAsCli(int index) {
     return m_Algorithm.getTraceClassifierAsCli(index);
   }
   
@@ -909,27 +908,33 @@ public class MultiSearch
    */
   @Override
   public String toString() {
-    String	result;
-    int		i;
+    StringBuilder	result;
+    int			i;
+
+    result = new StringBuilder();
 
     if (getValues() == null) {
-      result = "No search performed yet.";
+      result.append("No search performed yet.");
     }
     else {
-      result =
-	this.getClass().getName() + ":\n"
-	  + "Classifier: " + getCommandline(getBestClassifier()) + "\n\n";
+      result.append(this.getClass().getName() + ":\n"
+	  + "Classifier: " + getCommandline(getBestClassifier()) + "\n\n");
       for (i = 0; i < m_Generator.getParameters().length; i++)
-	result += (i+1) + ". property: " + m_Generator.getParameters()[i].getProperty() + "\n";
-      result +=   "Evaluation: " + getEvaluation().getSelectedTag().getReadable() + "\n"
-	+ "Coordinates: " + getValues() + "\n";
+	result.append((i+1) + ". property: " + m_Generator.getParameters()[i].getProperty() + "\n");
+      result.append("Evaluation: " + getEvaluation().getSelectedTag().getReadable() + "\n"
+	+ "Coordinates: " + getValues() + "\n");
 
-      result +=
-	"Values: " + m_Generator.evaluate(getValues()) + "\n\n"
-	  + m_Classifier.toString();
+      result.append("Values: " + m_Generator.evaluate(getValues()) + "\n\n"
+	  + m_Classifier.toString());
+
+      if (m_Debug) {
+	result.append("\n\nTrace:\n");
+	for (i = 0; i < getTraceSize(); i++)
+	  result.append("\n" + (i+1) + ". " + getTraceClassifierAsCli(i));
+      }
     }
 
-    return result;
+    return result.toString();
   }
 
   /**
