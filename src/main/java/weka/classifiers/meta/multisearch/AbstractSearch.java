@@ -47,7 +47,22 @@ import java.util.Vector;
 public abstract class AbstractSearch
   implements Serializable, Cloneable, OptionHandler {
 
+  /** for tracking the setups. */
   protected List<Entry<Integer, Performance>> m_Trace;
+
+  /**
+   * Container class for the search results.
+   *
+   * @author FracPete (fracpete at waikato dot ac dot nz)
+   * @version $Revision$
+   */
+  public static class SearchResult
+    implements Serializable {
+
+    public Classifier classifier = null;
+    public Performance performance = null;
+    public Point<Object> values = null;
+  }
 
   /** the owner. */
   protected transient MultiSearch m_Owner;
@@ -99,7 +114,7 @@ public abstract class AbstractSearch
   }
 
   /**
-   * Retursn the current onwer.
+   * Returns the current owner.
    *
    * @return		the owner, null if none set
    */
@@ -252,26 +267,6 @@ public abstract class AbstractSearch
   }
 
   /**
-   * Turns a performance setup into a classifier.
-   *
-   * @param performance	the setup to convert
-   * @return		the generated classifier or null in case of an error
-   */
-  public Classifier performanceToClassifier(Performance performance) {
-    Point<Object>	evals;
-
-    try {
-      evals = m_Owner.getGenerator().evaluate(performance.getValues());
-      return (Classifier) m_Owner.getGenerator().setup((Serializable) m_Owner.getClassifier(), evals);
-    }
-    catch (Exception e) {
-      System.err.println("Failed to store trace for performance: " + performance);
-      e.printStackTrace();
-      return null;
-    }
-  }
-
-  /**
    * Adds the performance to the cache and the current list of performances.
    * Does nothing if at least one setup failed.
    *
@@ -311,7 +306,7 @@ public abstract class AbstractSearch
    * @param index the index of the trace item to obtain
    */
   public String getTraceClassifierAsCli(int index) {
-    return getCommandline(performanceToClassifier(m_Trace.get(index).getValue()));
+    return getCommandline(m_Trace.get(index).getValue().getClassifier());
   }
 
   /**
@@ -333,12 +328,10 @@ public abstract class AbstractSearch
   }
 
   /**
-   * Returns the performance of a given item in the trace.
-   *
-   * @param index the index of the trace item to obtain
+   * Returns the full trace.
    */
-  public Performance getTrace(int index) {
-    return m_Trace.get(index).getValue();
+  public List<Entry<Integer, Performance>> getTrace() {
+    return m_Trace;
   }
 
   /**
@@ -390,7 +383,7 @@ public abstract class AbstractSearch
    * @return		the best classifier setup
    * @throws Exception	if search fails
    */
-  public abstract Classifier doSearch(Instances data) throws Exception;
+  public abstract SearchResult doSearch(Instances data) throws Exception;
 
   /**
    * Called after the search has been executed.
@@ -402,7 +395,7 @@ public abstract class AbstractSearch
    * @return		the best classifier setup
    * @throws Exception	if search fails
    */
-  public Classifier postSearch(Instances data, Classifier best) throws Exception {
+  public SearchResult postSearch(Instances data, SearchResult best) throws Exception {
     return best;
   }
 
@@ -413,8 +406,8 @@ public abstract class AbstractSearch
    * @return		the best classifier setup
    * @throws Exception	if search fails
    */
-  public Classifier search(Instances data) throws Exception {
-    Classifier 	best;
+  public SearchResult search(Instances data) throws Exception {
+    SearchResult 	best;
 
     log("\n"
       + getClass().getName() + "\n"

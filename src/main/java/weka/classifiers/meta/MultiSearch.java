@@ -27,9 +27,11 @@ import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.meta.multisearch.AbstractEvaluationFactory;
 import weka.classifiers.meta.multisearch.AbstractEvaluationMetrics;
 import weka.classifiers.meta.multisearch.AbstractSearch;
+import weka.classifiers.meta.multisearch.AbstractSearch.SearchResult;
 import weka.classifiers.meta.multisearch.DefaultEvaluationFactory;
 import weka.classifiers.meta.multisearch.DefaultSearch;
 import weka.classifiers.meta.multisearch.Performance;
+import weka.classifiers.meta.multisearch.PerformanceComparator;
 import weka.core.AdditionalMeasureProducer;
 import weka.core.Capabilities;
 import weka.core.Capabilities.Capability;
@@ -47,13 +49,17 @@ import weka.core.Tag;
 import weka.core.Utils;
 import weka.core.setupgenerator.AbstractParameter;
 import weka.core.setupgenerator.MathParameter;
+import weka.core.setupgenerator.ParameterGroup;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Vector;
 
 /**
@@ -73,9 +79,12 @@ import java.util.Vector;
  * The best classifier setup can be accessed after the buildClassifier call via the getBestClassifier method.<br>
  * <br>
  * The trace of setups evaluated can be accessed after the buildClassifier call as well, using the following methods:<br>
+ * - getTrace()<br>
  * - getTraceSize()<br>
  * - getTraceValue(int)<br>
- * - getTraceClassifierAsCli(int)
+ * - getTraceFolds(int)<br>
+ * - getTraceClassifierAsCli(int)<br>
+ * Using the weka.core.setupgenerator.ParameterGroup parameter, it is possible to group dependent parameters. In this case, all top-level parameters must be of type weka.core.setupgenerator.ParameterGroup.
  * <br><br>
  <!-- globalinfo-end -->
  *
@@ -191,7 +200,7 @@ public class MultiSearch
   private static final long serialVersionUID = -5129316523575906233L;
 
   /** the Classifier with the best setup. */
-  protected Classifier m_BestClassifier;
+  protected SearchResult m_BestClassifier;
 
   /** the evaluation factory to use. */
   protected AbstractEvaluationFactory m_Factory;
@@ -202,17 +211,23 @@ public class MultiSearch
   /** the type of evaluation. */
   protected int m_Evaluation;
 
-  /** for generating the search parameters. */
-  protected SetupGenerator m_Generator;
-
   /** the log file to use. */
   protected File m_LogFile = new File(System.getProperty("user.dir"));
 
   /** the default parameters. */
   protected AbstractParameter[] m_DefaultParameters;
 
+  /** the parameters. */
+  protected AbstractParameter[] m_Parameters;
+
   /** the search algorithm. */
   protected AbstractSearch m_Algorithm;
+
+  /** the current setup generator. */
+  protected SetupGenerator m_Generator;
+
+  /** for tracking the setups. */
+  protected List<Entry<Integer, Performance>> m_Trace;
 
   /**
    * the default constructor.
@@ -220,18 +235,18 @@ public class MultiSearch
   public MultiSearch() {
     super();
 
-    m_Generator         = new SetupGenerator();
     m_Factory           = newFactory();
     m_Metrics           = m_Factory.newMetrics();
     m_Evaluation        = m_Metrics.getDefaultMetric();
     m_Classifier        = defaultClassifier();
     m_DefaultParameters = defaultSearchParameters();
-    m_Generator.setBaseObject(this);
-    m_Generator.setParameters(m_DefaultParameters);
+    m_Parameters        = defaultSearchParameters();
     m_Algorithm         = defaultAlgorithm();
+    m_Trace             = new ArrayList<Entry<Integer, Performance>>();
 
     try {
-      m_BestClassifier = AbstractClassifier.makeCopy(m_Classifier);
+      m_BestClassifier = new SearchResult();
+      m_BestClassifier.classifier = AbstractClassifier.makeCopy(m_Classifier);
     }
     catch (Exception e) {
       System.err.println("Failed to create copy of default classifier!");
@@ -267,9 +282,15 @@ public class MultiSearch
 	+ "\n"
         + "The trace of setups evaluated can be accessed after the buildClassifier "
 	+ "call as well, using the following methods:\n"
+        + "- getTrace()\n"
         + "- getTraceSize()\n"
         + "- getTraceValue(int)\n"
-        + "- getTraceClassifierAsCli(int)";
+        + "- getTraceFolds(int)\n"
+        + "- getTraceClassifierAsCli(int)"
+        + "\n"
+        + "Using the " + ParameterGroup.class.getName() + " parameter, it is "
+        + "possible to group dependent parameters. In this case, all top-level "
+        + "parameters must be of type " + ParameterGroup.class.getName() + ".";
   }
 
   /**
@@ -393,9 +414,9 @@ public class MultiSearch
     result.add("-E");
     result.add("" + getEvaluation());
 
-    for (i = 0; i < m_Generator.getParameters().length; i++) {
+    for (i = 0; i < getSearchParameters().length; i++) {
       result.add("-search");
-      result.add(getCommandline(m_Generator.getParameters()[i]));
+      result.add(getCommandline(getSearchParameters()[i]));
     }
 
     result.add("-algorithm");
@@ -449,7 +470,7 @@ public class MultiSearch
       tmpOptions[0] = "";
       params[i]     = (AbstractParameter) Utils.forName(AbstractParameter.class, tmpStr, tmpOptions);
     }
-    m_Generator.setParameters(params);
+    setSearchParameters(params);
 
     tmpStr = Utils.getOption("algorithm", options);
     if (!tmpStr.isEmpty()) {
@@ -480,7 +501,7 @@ public class MultiSearch
   public void setClassifier(Classifier newClassifier) {
     super.setClassifier(newClassifier);
     try {
-      m_BestClassifier = AbstractClassifier.makeCopy(m_Classifier);
+      m_BestClassifier.classifier = AbstractClassifier.makeCopy(m_Classifier);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -503,7 +524,7 @@ public class MultiSearch
    * @param value	the parameters
    */
   public void setSearchParameters(AbstractParameter[] value) {
-    m_Generator.setParameters(value.clone());
+    m_Parameters = value;
   }
 
   /**
@@ -512,7 +533,7 @@ public class MultiSearch
    * @return		the parameters
    */
   public AbstractParameter[] getSearchParameters() {
-    return m_Generator.getParameters();
+    return m_Parameters;
   }
 
   /**
@@ -631,7 +652,7 @@ public class MultiSearch
    * @return		the best Classifier setup
    */
   public Classifier getBestClassifier() {
-    return m_BestClassifier;
+    return m_BestClassifier.classifier;
   }
 
   /**
@@ -654,9 +675,9 @@ public class MultiSearch
 
     result = new Vector();
 
-    if (getValues() != null) {
-      for (i = 0; i < getValues().dimensions(); i++) {
-        if (getValues().getValue(i) instanceof Double)
+    if (getBestValues() != null) {
+      for (i = 0; i < getBestValues().dimensions(); i++) {
+        if (getBestValues().getValue(i) instanceof Double)
           result.add("measure-" + i);
       }
     }
@@ -672,7 +693,7 @@ public class MultiSearch
    */
   public double getMeasure(String measureName) {
     if (measureName.startsWith("measure-"))
-      return (Double) m_Generator.evaluate(getValues()).getValue(Integer.parseInt(measureName.replace("measure-", "")));
+      return (Double) getBestValues().getValue(Integer.parseInt(measureName.replace("measure-", "")));
     else
       throw new IllegalArgumentException("Measure '" + measureName + "' not supported!");
   }
@@ -709,8 +730,17 @@ public class MultiSearch
    *
    * @return		the best parameter combination
    */
-  public Point<Object> getValues() {
-    return m_Algorithm.getValues();
+  public Point<Object> getBestValues() {
+    return m_BestClassifier.values;
+  }
+
+  /**
+   * returns the points that were found to work best.
+   *
+   * @return		the best points
+   */
+  public Point<Object> getBestCoordinates() {
+    return m_BestClassifier.performance.getValues();
   }
 
   /**
@@ -840,7 +870,7 @@ public class MultiSearch
    * setups that where tested in order to find the best. 
    */
   public int getTraceSize() {
-    return m_Algorithm.getTraceSize();
+    return m_Trace.size();
   }
   
   /**
@@ -849,7 +879,7 @@ public class MultiSearch
    * @param index the index of the trace item to obtain
    */
   public String getTraceClassifierAsCli(int index) {
-    return m_Algorithm.getTraceClassifierAsCli(index);
+    return getCommandline(m_Trace.get(index).getValue().getClassifier());
   }
   
   /**
@@ -858,7 +888,7 @@ public class MultiSearch
    * @param index the index of the trace item to obtain
    */
   public Double getTraceValue(int index) {
-    return m_Algorithm.getTraceValue(index);
+    return m_Trace.get(index).getValue().getPerformance();
   }
 
   /**
@@ -867,16 +897,46 @@ public class MultiSearch
    * @param index the index of the trace item to obtain
    */
   public Integer getTraceFolds(int index) {
-    return m_Algorithm.getTraceFolds(index);
+    return m_Trace.get(index).getKey();
   }
 
   /**
-   * Returns the performance of a given item in the trace.
-   *
-   * @param index the index of the trace item to obtain
+   * Returns the full trace.
    */
-  public Performance getTrace(int index) {
-    return m_Algorithm.getTrace(index);
+  public List<Entry<Integer, Performance>> getTrace() {
+    return m_Trace;
+  }
+
+  /**
+   * Groups the parameters, i.e., when using ParameterGroup objects.
+   *
+   * @return		the groups
+   */
+  protected List<AbstractParameter[]> groupParameters() {
+    List<AbstractParameter[]>	result;
+    int				groupCount;
+    int				i;
+
+    result = new ArrayList<AbstractParameter[]>();
+
+    groupCount = 0;
+    for (i = 0; i < m_Parameters.length; i++) {
+      if (m_Parameters[i] instanceof ParameterGroup)
+	groupCount++;
+    }
+    if ((groupCount > 0) && (m_Parameters.length != groupCount))
+      throw new IllegalStateException(
+	"Cannot mix " + ParameterGroup.class.getName() + " with other parameter types!");
+
+    if (groupCount > 0) {
+      for (i = 0; i < m_Parameters.length; i++)
+        result.add(((ParameterGroup) m_Parameters[i]).getParameters());
+    }
+    else {
+      result.add(m_Parameters);
+    }
+
+    return result;
   }
 
   /**
@@ -886,7 +946,11 @@ public class MultiSearch
    * @throws Exception  if something goes wrong
    */
   public void buildClassifier(Instances data) throws Exception {
-    int		i;
+    int				i;
+    SearchResult 		result;
+    List<AbstractParameter[]>	groups;
+    List<SearchResult>		results;
+    PerformanceComparator	comp;
 
     // can classifier handle the data?
     getCapabilities().testWithFail(data);
@@ -895,14 +959,40 @@ public class MultiSearch
     data = new Instances(data);
     data.deleteWithMissingClass();
 
-    m_Generator.setBaseObject((Serializable) getClassifier());
-    m_Algorithm.setOwner(this);
-    m_BestClassifier = m_Algorithm.search(data);
+    m_Trace.clear();
+    groups  = groupParameters();
+    results = new ArrayList<SearchResult>();
+    for (i = 0; i < groups.size(); i++) {
+      if (groups.size() > 1)
+	log("\n---> group #" + (i+1));
+
+      m_Generator = new SetupGenerator();
+      m_Generator.setBaseObject(this);
+      m_Generator.setParameters(groups.get(i).clone());
+      m_Generator.setBaseObject((Serializable) getClassifier());
+
+      m_Algorithm.setOwner(this);
+      result = m_Algorithm.search(data);
+      results.add(result);
+
+      m_Trace.addAll(m_Algorithm.getTrace());
+    }
+
+    // find best classifier among groups
+    result = results.get(0);
+    if (results.size() > 1) {
+      comp = new PerformanceComparator(getEvaluation().getSelectedTag().getID(), getMetrics());
+      for (i = 1; i < results.size(); i++) {
+	if (comp.compare(results.get(i).performance, result.performance) < 0)
+	  result = results.get(i);
+      }
+    }
+    m_BestClassifier = result;
 
     // train classifier
     log("\n---> train best - start");
     log(Utils.toCommandLine(m_BestClassifier));
-    m_Classifier = AbstractClassifier.makeCopy(m_BestClassifier);
+    m_Classifier = AbstractClassifier.makeCopy(m_BestClassifier.classifier);
     m_Classifier.buildClassifier(data);
 
     log("\n---> train best - end");
@@ -935,24 +1025,21 @@ public class MultiSearch
   public String toString() {
     StringBuilder	result;
     int			i;
-    Performance		performance;
-    Classifier		cls;
 
     result = new StringBuilder();
 
-    if (getValues() == null) {
+    if (getBestValues() == null) {
       result.append("No search performed yet.");
     }
     else {
       result.append(this.getClass().getName() + ":\n"
 	  + "Classifier: " + getCommandline(getBestClassifier()) + "\n\n");
-      for (i = 0; i < m_Generator.getParameters().length; i++)
-	result.append((i+1) + ". property: " + m_Generator.getParameters()[i].getProperty() + "\n");
+      for (i = 0; i < m_Parameters.length; i++)
+	result.append((i+1) + ". property: " + m_Parameters[i].getProperty() + "\n");
       result.append("Evaluation: " + getEvaluation().getSelectedTag().getReadable() + "\n"
-	+ "Coordinates: " + getValues() + "\n");
+	+ "Coordinates: " + getBestCoordinates() + "\n");
 
-      result.append("Values: " + m_Generator.evaluate(getValues()) + "\n\n"
-	  + m_Classifier.toString());
+      result.append("Values: " + getBestValues() + "\n\n" + m_Classifier.toString());
 
       if (m_Debug) {
 	result.append("\n\nTrace (format: #. folds/performance - setup):\n");

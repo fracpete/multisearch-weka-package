@@ -492,8 +492,8 @@ public class DefaultSearch
    * @return		the best point (not actual parameters!)
    * @throws Exception	if setup or training fails
    */
-  protected Point<Object> determineBestInSpace(Space space, Instances train, Instances test, int folds) throws Exception {
-    Point<Object>		result;
+  protected Performance determineBestInSpace(Space space, Instances train, Instances test, int folds) throws Exception {
+    Performance			result;
     int				i;
     Enumeration<Point<Object>> enm;
     Performance			performance;
@@ -549,7 +549,7 @@ public class DefaultSearch
     // sort list
     Collections.sort(m_Performances, new PerformanceComparator(m_Owner.getEvaluation().getSelectedTag().getID(), m_Owner.getMetrics()));
 
-    result = m_Performances.firstElement().getValues();
+    result = m_Performances.firstElement();
 
     // check whether all performances are the same
     m_UniformPerformance = true;
@@ -579,13 +579,13 @@ public class DefaultSearch
    * @return 		the best point (not evaluated parameters!)
    * @throws Exception 	if something goes wrong
    */
-  protected Point<Object> findBest(Instances inst) throws Exception {
+  protected Performance findBest(Instances inst) throws Exception {
+    Performance		result;
     Point<Integer>	center;
     Space		neighborSpace;
     boolean		finished;
     Point<Object>	evals;
-    Point<Object>	result;
-    Point<Object>	resultOld;
+    Performance		resultOld;
     int			iteration;
     Instances		sample;
     Resample 		resample;
@@ -620,8 +620,8 @@ public class DefaultSearch
     if (!finished) {
       do {
 	iteration++;
-	resultOld = (Point<Object>) result.clone();
-	center    = m_Space.getLocations(result);
+	resultOld = (Performance) result.clone();
+	center    = m_Space.getLocations(result.getValues());
 	// on border? -> finished
 	if (m_Space.isOnBorder(center)) {
 	  log("Center is on border of space.");
@@ -637,7 +637,7 @@ public class DefaultSearch
 	  finished = m_UniformPerformance;
 
 	  // no improvement?
-	  if (result.equals(resultOld)) {
+	  if (result.getValues().equals(resultOld.getValues())) {
 	    finished = true;
 	    log("\nNo better point found.");
 	  }
@@ -647,7 +647,7 @@ public class DefaultSearch
     }
 
     log("\nFinal result: " + result);
-    evals = m_Owner.getGenerator().evaluate(result);
+    evals = m_Owner.getGenerator().evaluate(result.getValues());
     cls = (Classifier) m_Owner.getGenerator().setup((Serializable) m_Owner.getClassifier(), evals);
     log("Classifier: " + getCommandline(cls));
 
@@ -694,15 +694,19 @@ public class DefaultSearch
    * @throws Exception	if search fails
    */
   @Override
-  public Classifier doSearch(Instances data) throws Exception {
-    Classifier		result;
+  public SearchResult doSearch(Instances data) throws Exception {
+    SearchResult	result;
     Point<Object>	evals;
+    Performance		performance;
 
     loadTestData(data);
 
-    m_Values = findBest(new Instances(data));
-    evals    = m_Owner.getGenerator().evaluate(m_Values);
-    result   = (Classifier) m_Owner.getGenerator().setup((Serializable) m_Owner.getClassifier(), evals);
+    performance        = findBest(new Instances(data));
+    evals              = m_Owner.getGenerator().evaluate(performance.getValues());
+    result             = new SearchResult();
+    result.classifier  = (Classifier) m_Owner.getGenerator().setup((Serializable) m_Owner.getClassifier(), evals);
+    result.performance = performance;
+    result.values      = evals;
 
     return result;
   }

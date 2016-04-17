@@ -243,8 +243,8 @@ public abstract class AbstractMultiThreadedSearch
    * @throws Exception	if search fails
    */
   @Override
-  public Classifier postSearch(Instances data, Classifier best) throws Exception {
-    Classifier	result;
+  public SearchResult postSearch(Instances data, SearchResult best) throws Exception {
+    SearchResult	result;
 
     result = super.postSearch(data, best);
     stopExecutorPool();

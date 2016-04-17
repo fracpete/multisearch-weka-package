@@ -20,6 +20,7 @@
 
 package weka.classifiers.meta.multisearch;
 
+import weka.classifiers.Classifier;
 import weka.core.Tag;
 import weka.core.setupgenerator.Point;
 
@@ -35,7 +36,7 @@ import java.util.HashMap;
  * @see PerformanceComparator
  */
 public class Performance
-  implements Serializable {
+  implements Serializable, Cloneable {
 
   /** for serialization. */
   private static final long serialVersionUID = -4374706475277588755L;
@@ -52,30 +53,58 @@ public class Performance
   /** stores the metric values. */
   protected HashMap<Integer,Double> m_MetricValues;
 
+  /** the classifier. */
+  protected Classifier m_Classifier;
+
+  protected Performance() {
+    super();
+  }
+
   /**
    * Initializes the performance container. If the Evaluation object is null,
    * then the worst possible values for the measures are assumed (in order to
    * assure a low ranking).
    *
    * @param values		the values
-   * @param evaluation	the evaluation to extract the performance
+   * @param evaluation		the evaluation to extract the performance
    * 				measures from, can be null
    * @param evalType		the type of evaluation
+   * @param classifier		the classifier
    * @throws Exception	if retrieving of measures fails
    */
-  public Performance(Point<Object> values, AbstractEvaluationWrapper evaluation, int evalType) throws Exception {
-    super();
+  public Performance(Point<Object> values, AbstractEvaluationWrapper evaluation, int evalType, Classifier classifier) throws Exception {
+    this();
 
     m_Values       = values;
     m_Evaluation   = evalType;
     m_MetricValues = new HashMap<Integer, Double>();
     m_Metrics      = null;
+    m_Classifier   = classifier;
     if (evaluation != null) {
       m_Metrics = evaluation.getMetrics();
       for (Tag tag : evaluation.getMetrics().getTags()) {
         m_MetricValues.put(tag.getID(), evaluation.getMetric(tag));
       }
     }
+  }
+
+  /**
+   * Returns a copy of itself.
+   *
+   * @return		the copy
+   */
+  @Override
+  public Object clone() {
+    Performance		result;
+
+    result                = new Performance();
+    result.m_Values       = (Point<Object>) m_Values.clone();
+    result.m_Evaluation   = m_Evaluation;
+    result.m_Metrics      = m_Metrics;
+    result.m_MetricValues = (HashMap<Integer,Double>) m_MetricValues.clone();
+    result.m_Classifier   = m_Classifier;
+
+    return result;
   }
 
   /**
@@ -131,6 +160,15 @@ public class Performance
    */
   public Point<Object> getValues() {
     return m_Values;
+  }
+
+  /**
+   * Returns the classifier.
+   *
+   * @return the classifier
+   */
+  public Classifier getClassifier() {
+    return m_Classifier;
   }
 
   /**

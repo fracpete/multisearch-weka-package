@@ -110,7 +110,11 @@ public class DefaultEvaluationTask
     }
 
     // store performance
-    performance = new Performance(m_Values, m_Owner.getFactory().newWrapper(eval), m_Evaluation);
+    performance = new Performance(
+      m_Values,
+      m_Owner.getFactory().newWrapper(eval),
+      m_Evaluation,
+      (Classifier) m_Generator.setup((Serializable) m_Owner.getClassifier(), evals));
     m_Owner.getAlgorithm().addPerformance(performance, m_Folds);
 
     // log
