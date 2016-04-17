@@ -169,10 +169,10 @@ public class SpaceDimension
       throw new IllegalArgumentException(
 	  "Max must be smaller than list length (max=" + max + ", list=" + list.length + ")!");
     
-    // is min < max?
-    if (m_Min >= m_Max)
+    // is min <= max?
+    if (m_Min > m_Max)
       throw new IllegalArgumentException(
-	  "Min must be smaller than Max (min=" + min + ", max=" + max + ")!");
+	  "Min must be at most Max (min=" + min + ", max=" + max + ")!");
   }
 
   /**

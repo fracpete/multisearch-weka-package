@@ -34,7 +34,7 @@ import java.util.Vector;
  * @version $Revision: 4521 $
  */
 public class MathParameter
-  extends AbstractParameter {
+  extends AbstractPropertyParameter {
 
   /** for serialization. */
   private static final long serialVersionUID = 6430400142112674316L;

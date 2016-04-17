@@ -474,7 +474,7 @@ public class MultiSearch
 
     tmpStr = Utils.getOption("algorithm", options);
     if (!tmpStr.isEmpty()) {
-      tmpOptions = Utils.splitOptions(search.get(i));
+      tmpOptions = Utils.splitOptions(tmpStr);
       tmpStr = tmpOptions[0];
       tmpOptions[0] = "";
       setAlgorithm((AbstractSearch) Utils.forName(AbstractSearch.class, tmpStr, tmpOptions));
@@ -1035,7 +1035,7 @@ public class MultiSearch
       result.append(this.getClass().getName() + ":\n"
 	  + "Classifier: " + getCommandline(getBestClassifier()) + "\n\n");
       for (i = 0; i < m_Parameters.length; i++)
-	result.append((i+1) + ". property: " + m_Parameters[i].getProperty() + "\n");
+	result.append((i+1) + ". parameter: " + m_Parameters[i] + "\n");
       result.append("Evaluation: " + getEvaluation().getSelectedTag().getReadable() + "\n"
 	+ "Coordinates: " + getBestCoordinates() + "\n");
 

@@ -14,7 +14,7 @@
  */
 
 /*
- * ListParameter.java
+ * AbstractParameter.java
  * Copyright (C) 2008 University of Waikato, Hamilton, New Zealand
  */
 
@@ -27,19 +27,26 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 /**
- * Container class for search parameters.
+ * Abstract container class for search parameters.
  *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
  * @version $Revision: 4521 $
  */
-public class ListParameter
-  extends AbstractPropertyParameter {
-  
+public abstract class AbstractPropertyParameter
+  extends AbstractParameter {
+
   /** for serialization. */
-  private static final long serialVersionUID = 1415901739037349037L;
-  
-  /** the explicit list of values to use. */
-  protected String[] m_List = new String[0];
+  private static final long serialVersionUID = -941906920843843404L;
+
+  /** the property to test. */
+  protected String m_Property = "fill-in-property-path";
+
+  /**
+   * default constructor.
+   */
+  public AbstractPropertyParameter() {
+    super();
+  }
   
   /**
    * Returns a string describing the object.
@@ -47,13 +54,8 @@ public class ListParameter
    * @return 		a description suitable for displaying in the
    *         		explorer/experimenter gui
    */
-  public String globalInfo() {
-    return 
-        "Container class defining the search parameters for a particular "
-      + "property.\n"
-      + "Only the specified list values are used.";
-  }
-  
+  public abstract String globalInfo();
+
   /**
    * Gets an enumeration describing the available options.
    *
@@ -70,9 +72,9 @@ public class ListParameter
       result.add(enm);
 
     result.addElement(new Option(
-        "\tThe list of explicit values to use (blank-separated list).\n"
-        + "\t(default: none)",
-        "list", 1, "-list <values>"));
+        "\tThe property path.\n"
+        + "\t(default: '')",
+        "property", 1, "-property <option>"));
 
     return result.elements();
   }
@@ -93,8 +95,8 @@ public class ListParameter
     for (i = 0; i < options.length; i++)
       result.add(options[i]);
 
-    result.add("-list");
-    result.add("" + getList());
+    result.add("-property");
+    result.add("" + getProperty());
 
     return result.toArray(new String[result.size()]);	  
   }
@@ -108,11 +110,11 @@ public class ListParameter
   public void setOptions(String[] options) throws Exception {
     String	tmpStr;
     
-    tmpStr = Utils.getOption("list", options);
+    tmpStr = Utils.getOption("property", options);
     if (tmpStr.length() != 0)
-      setList(tmpStr);
+      setProperty(tmpStr);
     else
-      setList("");
+      setProperty("");
 
     super.setOptions(options);
   }
@@ -123,50 +125,34 @@ public class ListParameter
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
-  public String listTipText() {
-    return "The blank-separated list of values to use.";
+  public String propertyTipText() {
+    return "The property to test.";
   }
 
   /**
-   * Get the blank-separated list of values.
+   * Get the property to update.
    *
-   * @return 		the list.
+   * @return 		the property.
    */
-  public String getList() {
-    return Utils.joinOptions(m_List);
+  public String getProperty() {
+    return m_Property;
   }
   
   /**
-   * Set the blank-separated list of values.
+   * Set the property to update.
    *
-   * @param value 	the list of values.
+   * @param value 	the property.
    */
-  public void setList(String value) {
-    if (value.length() > 0) {
-      try {
-	m_List = Utils.splitOptions(value);
-      }
-      catch (Exception e) {
-	e.printStackTrace();
-	m_List = new String[0];
-      }
-    }
-    else {
-      m_List = new String[0];
-    }
+  public void setProperty(String value) {
+    m_Property = value;
   }
-  
+
   /**
    * Returns a string representation of the search parameter.
    * 
    * @return		a string representation
    */
   public String toString() {
-    String	result;
-
-    result = super.toString();
-    result += ", list: " + getList();
-    
-    return result;
+    return "property: " + getProperty();
   }
 }

@@ -104,7 +104,6 @@ public class ParameterGroup
   public String[] getOptions() {
     int       	i;
     Vector    	result;
-    String[]  	options;
     String	tmpStr;
 
     result = new Vector();
@@ -180,5 +179,14 @@ public class ParameterGroup
    */
   public AbstractParameter[] getParameters() {
     return m_Parameters;
+  }
+
+  /**
+   * Short description.
+   *
+   * @return		the description
+   */
+  public String toString() {
+    return Utils.arrayToString(m_Parameters);
   }
 }

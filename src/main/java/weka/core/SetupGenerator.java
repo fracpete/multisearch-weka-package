@@ -33,6 +33,7 @@ import weka.core.expressionlanguage.common.VariableDeclarationsCompositor;
 import weka.core.expressionlanguage.core.Node;
 import weka.core.expressionlanguage.parser.Parser;
 import weka.core.setupgenerator.AbstractParameter;
+import weka.core.setupgenerator.AbstractPropertyParameter;
 import weka.core.setupgenerator.ListParameter;
 import weka.core.setupgenerator.MathParameter;
 import weka.core.setupgenerator.Point;
@@ -140,9 +141,9 @@ public class SetupGenerator
       result.addElement(en.nextElement());
 
     result.addElement(new Option(
-	  "",
-	  "", 0, "\nOptions specific to search parameter class '"
-	  + ListParameter.class.getName() + "' ('-search'):"));
+      "",
+      "", 0, "\nOptions specific to search parameter class '"
+      + ListParameter.class.getName() + "' ('-search'):"));
 
     en = new ListParameter().listOptions();
     while (en.hasMoreElements())
@@ -589,11 +590,11 @@ public class SetupGenerator
     result = (Serializable) new SerializedObject(original).getObject();
 
     for (i = 0; i < values.dimensions(); i++) {
-      cnt = PropertyPath.find(original, new Path(m_Parameters[i].getProperty()));
+      cnt = PropertyPath.find(original, new Path(((AbstractPropertyParameter) m_Parameters[i]).getProperty()));
       if (cnt != null)
 	setValue(
 	    result,
-	    m_Parameters[i].getProperty(),
+	    ((AbstractPropertyParameter) m_Parameters[i]).getProperty(),
 	    values.getValue(i));
     }
 
