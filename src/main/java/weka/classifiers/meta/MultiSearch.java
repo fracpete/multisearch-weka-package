@@ -32,6 +32,7 @@ import weka.classifiers.meta.multisearch.DefaultEvaluationFactory;
 import weka.classifiers.meta.multisearch.DefaultSearch;
 import weka.classifiers.meta.multisearch.Performance;
 import weka.classifiers.meta.multisearch.PerformanceComparator;
+import weka.classifiers.meta.multisearch.TraceableOptimizer;
 import weka.core.AdditionalMeasureProducer;
 import weka.core.Capabilities;
 import weka.core.Capabilities.Capability;
@@ -194,7 +195,7 @@ import java.util.Vector;
  */
 public class MultiSearch
   extends RandomizableSingleClassifierEnhancer
-  implements AdditionalMeasureProducer, Summarizable {
+  implements AdditionalMeasureProducer, Summarizable, TraceableOptimizer {
 
   /** for serialization. */
   private static final long serialVersionUID = -5129316523575906233L;
