@@ -21,28 +21,28 @@ import weka.filters.Filter;
 import weka.filters.unsupervised.instance.Resample;
 
 public class RandomSearch extends AbstractMultiThreadedSearch {
-	
+
 	/** for serialization. */
 	private static final long serialVersionUID = 2542453917013899104L;
 
-	/** the sample size to search the initial space with. */
+	/** the sample size to search with. */
 	protected double m_SampleSize = 100;
 
 	/** number of cross-validation folds for each point in space. */
-	protected int m_InitialSpaceNumFolds = 2;
+	protected int m_SearchSpaceNumFolds = 2;
 
 	/**
-	 * the optional test set to use for the initial evaluation (overrides
+	 * the optional test set to use for the evaluation (overrides
 	 * cross-validation, ignored if dir).
 	 */
-	protected File m_InitialSpaceTestSet = new File(".");
+	protected File m_SearchSpaceTestSet = new File(".");
 
-	/** the optional test set to use for the initial evaluation. */
-	protected Instances m_InitialSpaceTestInst;
+	/** the optional test set to use for the evaluation. */
+	protected Instances m_SearchSpaceTestInst;
 
 	/** maximum number of iterations to find optimum. */
 	protected int m_NumIterations = 100;
-	
+
 	/** the random seed */
 	protected int m_RandomSeed = 1;
 
@@ -71,21 +71,20 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 				"\tThe number of cross-validation folds for the search space.\n"
 						+ "\tNumbers smaller than 2 turn off cross-validation and\n"
 						+ "\tjust perform evaluation on the training set.\n"
-						+ "\t(default: 2)", "initial-folds", 1,
-				"-initial-folds <num>"));
+						+ "\t(default: 2)", "num-folds", 1, "-num-folds <num>"));
 
 		result.addElement(new Option(
-				"\tThe (optional) test set to use for the initial space.\n"
+				"\tThe (optional) test set to use for the search space.\n"
 						+ "\tGets ignored if pointing to a file. Overrides cross-validation.\n"
-						+ "\t(default: .)", "initial-test-set", 1,
-				"-initial-test-set <filename>"));
+						+ "\t(default: .)", "test-set", 1,
+				"-test-set <filename>"));
 
 		result.addElement(new Option(
 				"\tThe number parameter settings that are tried "
 						+ "(i.e., number of points in the search space are checked).\n"
 						+ "\t(default: 100)", "num-iterations", 1,
 				"-num-iterations <num>"));
-		
+
 		result.addElement(new Option("\tThe random seed", "seed", 1, "-S <num>"));
 
 		en = super.listOptions();
@@ -111,18 +110,18 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 		result.add("-sample-size");
 		result.add("" + getSampleSizePercent());
 
-		result.add("-initial-folds");
-		result.add("" + getInitialSpaceNumFolds());
+		result.add("-num-folds");
+		result.add("" + getSearchSpaceNumFolds());
 
-		result.add("-initial-test-set");
-		result.add("" + getInitialSpaceTestSet());
+		result.add("-test-set");
+		result.add("" + getSearchSpaceTestSet());
 
 		result.add("-num-iterations");
 		result.add("" + getNumIterations());
 
 		result.add("-num-slots");
 		result.add("" + getNumExecutionSlots());
-		
+
 		result.add("-S");
 		result.add("" + getRandomSeed());
 
@@ -151,17 +150,17 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 		else
 			setSampleSizePercent(100);
 
-		tmpStr = Utils.getOption("initial-folds", options);
+		tmpStr = Utils.getOption("num-folds", options);
 		if (tmpStr.length() != 0)
-			setInitialSpaceNumFolds(Integer.parseInt(tmpStr));
+			setSearchSpaceNumFolds(Integer.parseInt(tmpStr));
 		else
-			setInitialSpaceNumFolds(2);
+			setSearchSpaceNumFolds(2);
 
-		tmpStr = Utils.getOption("initial-test-set", options);
+		tmpStr = Utils.getOption("test-set", options);
 		if (tmpStr.length() != 0)
-			setInitialSpaceTestSet(new File(tmpStr));
+			setSearchSpaceTestSet(new File(tmpStr));
 		else
-			setInitialSpaceTestSet(new File(System.getProperty("user.dir")));
+			setSearchSpaceTestSet(new File(System.getProperty("user.dir")));
 
 		tmpStr = Utils.getOption("num-slots", options);
 		if (tmpStr.length() != 0)
@@ -175,13 +174,12 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 		else
 			setNumIterations(100);
 
-
 		tmpStr = Utils.getOption("S", options);
 		if (tmpStr.length() != 0)
 			setRandomSeed(Integer.parseInt(tmpStr));
 		else
 			setRandomSeed(1);
-		
+
 		super.setOptions(options);
 	}
 
@@ -196,7 +194,7 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 	}
 
 	/**
-	 * Gets the sample size for the initial space search.
+	 * Gets the sample size for the search space search.
 	 *
 	 * @return the sample size.
 	 */
@@ -205,10 +203,10 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 	}
 
 	/**
-	 * Sets the sample size for the initial space search.
+	 * Sets the sample size for the search space search.
 	 *
 	 * @param value
-	 *            the sample size for the initial space search.
+	 *            the sample size for the search space search.
 	 */
 	public void setSampleSizePercent(double value) {
 		m_SampleSize = value;
@@ -220,29 +218,29 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 	 * @return tip text for this property suitable for displaying in the
 	 *         explorer/experimenter gui
 	 */
-	public String initialSpaceNumFoldsTipText() {
+	public String searchSpaceNumFoldsTipText() {
 		return "The number of cross-validation folds when evaluating the search "
 				+ "space; values smaller than 2 turn cross-validation off and simple "
 				+ "evaluation on the training set is performed.";
 	}
 
 	/**
-	 * Gets the number of CV folds for the initial space.
+	 * Gets the number of CV folds for the search space.
 	 *
 	 * @return the number of folds.
 	 */
-	public int getInitialSpaceNumFolds() {
-		return m_InitialSpaceNumFolds;
+	public int getSearchSpaceNumFolds() {
+		return m_SearchSpaceNumFolds;
 	}
 
 	/**
-	 * Sets the number of CV folds for the initial space.
+	 * Sets the number of CV folds for the search space.
 	 *
 	 * @param value
 	 *            the number of folds.
 	 */
-	public void setInitialSpaceNumFolds(int value) {
-		m_InitialSpaceNumFolds = value;
+	public void setSearchSpaceNumFolds(int value) {
+		m_SearchSpaceNumFolds = value;
 	}
 
 	/**
@@ -251,28 +249,28 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 	 * @return tip text for this property suitable for displaying in the
 	 *         explorer/experimenter gui
 	 */
-	public String initialSpaceTestSetTipText() {
+	public String searchSpaceTestSetTipText() {
 		return "The (optional) test set to use for evaluating the search space; "
 				+ "overrides cross-validation; gets ignored if pointing to a directory.";
 	}
 
 	/**
-	 * Gets the test set to use for the initial space.
+	 * Gets the test set to use for the search space.
 	 *
 	 * @return the number of folds.
 	 */
-	public File getInitialSpaceTestSet() {
-		return m_InitialSpaceTestSet;
+	public File getSearchSpaceTestSet() {
+		return m_SearchSpaceTestSet;
 	}
 
 	/**
-	 * Sets the test set to use folds for the initial space.
+	 * Sets the test set to use folds for the search space.
 	 *
 	 * @param value
 	 *            the test set, ignored if dir.
 	 */
-	public void setInitialSpaceTestSet(File value) {
-		m_InitialSpaceTestSet = value;
+	public void setSearchSpaceTestSet(File value) {
+		m_SearchSpaceTestSet = value;
 	}
 
 	/**
@@ -282,7 +280,7 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 	 *         explorer/experimenter gui
 	 */
 	public String numIterationsTipText() {
-		return "The number parameter settings that are tried (i.e., number of points in the search space are checked)";
+		return "The number parameter settings that are tried; ";
 	}
 
 	/**
@@ -303,7 +301,7 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 	public void setNumIterations(int value) {
 		m_NumIterations = value;
 	}
-	
+
 	/**
 	 * Returns the tip text for this property.
 	 *
@@ -374,7 +372,7 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 		m_Completed = 0;
 		m_NumSetups = Math.min(space.size(), m_NumIterations);
 		Collections.shuffle(enm, random);
-		
+
 		for (int i = 0; i < m_NumSetups; ++i) {
 			values = enm.get(i);
 
@@ -397,13 +395,13 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 		// wait for execution to finish
 		if (m_Completed + m_Failed < m_NumSetups) {
 			block(true);
-		} 
-		
+		}
+
 		if (m_Failed > 0) {
 			throw new WekaException("Failed to evaluate " + m_Failed
 					+ " setups!");
 		}
-		
+
 		// sort list
 		Collections.sort(m_Performances,
 				new PerformanceComparator(m_Owner.getEvaluation()
@@ -464,16 +462,16 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 			resample.setInputFormat(inst);
 			sample = Filter.useFilter(inst, resample);
 		}
-		
+
 		m_UniformPerformance = false;
 
 		// find first center
-		log("\n=== Initial space - Start ===");
-		result = determineBestInSpace(m_Space, sample, m_InitialSpaceTestInst,
-				m_InitialSpaceNumFolds, random);
+		log("\n=== Search space - Start ===");
+		result = determineBestInSpace(m_Space, sample, m_SearchSpaceTestInst,
+				m_SearchSpaceNumFolds, random);
 		log("\nResult: " + result + "\n");
 		log("=== Search space - End ===\n");
-		
+
 		evals = m_Owner.getGenerator().evaluate(result.getValues());
 		cls = (Classifier) m_Owner.getGenerator().setup(
 				(Serializable) m_Owner.getClassifier(), evals);
@@ -493,20 +491,20 @@ public class RandomSearch extends AbstractMultiThreadedSearch {
 	protected void loadTestData(Instances data) throws Exception {
 		String msg;
 
-		m_InitialSpaceTestInst = null;
-		if (m_InitialSpaceTestSet.exists()
-				&& !m_InitialSpaceTestSet.isDirectory()) {
-			m_InitialSpaceTestInst = DataSource.read(m_InitialSpaceTestSet
+		m_SearchSpaceTestInst = null;
+		if (m_SearchSpaceTestSet.exists()
+				&& !m_SearchSpaceTestSet.isDirectory()) {
+			m_SearchSpaceTestInst = DataSource.read(m_SearchSpaceTestSet
 					.getAbsolutePath());
-			m_InitialSpaceTestInst.setClassIndex(data.classIndex());
-			msg = data.equalHeadersMsg(m_InitialSpaceTestInst);
+			m_SearchSpaceTestInst.setClassIndex(data.classIndex());
+			msg = data.equalHeadersMsg(m_SearchSpaceTestInst);
 			if (msg != null) {
 				throw new IllegalArgumentException(
-						"Test set for initial space not compatible with training dta:\n"
+						"Test set for search space not compatible with training dta:\n"
 								+ msg);
 			}
-			m_InitialSpaceTestInst.deleteWithMissingClass();
-			log("Using test set for initial space: " + m_InitialSpaceTestSet);
+			m_SearchSpaceTestInst.deleteWithMissingClass();
+			log("Using test set for search space: " + m_SearchSpaceTestSet);
 		}
 	}
 
