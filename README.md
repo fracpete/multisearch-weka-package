@@ -54,7 +54,7 @@ strategies are available:
 
 * `weka.classifiers.meta.multisearch.RandomSearch`
 
-  Random search of parameter space (contributsed by [Jan van Rijn](https://github.com/janvanrijn))
+  Random search of parameter space (contributed by [Jan van Rijn](https://github.com/janvanrijn))
 
 
 Example
