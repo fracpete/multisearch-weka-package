@@ -116,6 +116,8 @@ import java.util.Vector;
 public class DefaultSearch
   extends AbstractMultiThreadedSearch {
 
+  private static final long serialVersionUID = -3579744329581176799L;
+
   /** the sample size to search the initial space with. */
   protected double m_SampleSize = 100;
 
@@ -600,7 +602,7 @@ public class DefaultSearch
     else {
       log("Generating sample (" + getSampleSizePercent() + "%)");
       resample = new Resample();
-      resample.setRandomSeed(getOwner().getSeed());
+      resample.setRandomSeed(retrieveOwner().getSeed());
       resample.setSampleSizePercent(getSampleSizePercent());
       resample.setInputFormat(inst);
       sample = Filter.useFilter(inst, resample);

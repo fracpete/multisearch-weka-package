@@ -118,7 +118,7 @@ public abstract class AbstractSearch
    *
    * @return		the owner, null if none set
    */
-  public MultiSearch getOwner() {
+  public MultiSearch retrieveOwner() {
     return m_Owner;
   }
 

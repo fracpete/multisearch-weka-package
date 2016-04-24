@@ -478,7 +478,7 @@ public class RandomSearch
     } else {
       log("Generating sample (" + getSampleSizePercent() + "%)");
       resample = new Resample();
-      resample.setRandomSeed(getOwner().getSeed());
+      resample.setRandomSeed(retrieveOwner().getSeed());
       resample.setSampleSizePercent(getSampleSizePercent());
       resample.setInputFormat(inst);
       sample = Filter.useFilter(inst, resample);
