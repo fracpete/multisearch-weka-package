@@ -84,6 +84,7 @@ Releases
 
 Click on one of the following links to download the corresponding Weka package:
 
+* [2016.4.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.30/multisearch-2016.4.30.zip)
 * [2016.4.25](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.25/multisearch-2016.4.25.zip)
 * [2016.4.14](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.14/multisearch-2016.4.14.zip)
 * [2016.1.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.30/multisearch-2016.1.30.zip)
