@@ -15,7 +15,7 @@
 
 /*
  * SpaceDimension.java
- * Copyright (C) 2008 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
@@ -74,7 +74,8 @@ public class SpaceDimension
     }
     else if (param instanceof ListParameter) {
       ListParameter list = (ListParameter) param;
-      initList(0, Utils.splitOptions(list.getList()).length - 1, Utils.splitOptions(list.getList()), list.getProperty());
+      String[] items = list.getItems();
+      initList(0, items.length - 1, items, list.getProperty());
     }
     else {
       throw new IllegalStateException("Parameter class '" + param.getClass().getName() + "' not handled!");

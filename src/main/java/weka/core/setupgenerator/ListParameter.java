@@ -15,7 +15,7 @@
 
 /*
  * ListParameter.java
- * Copyright (C) 2008 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
@@ -37,10 +37,13 @@ public class ListParameter
   
   /** for serialization. */
   private static final long serialVersionUID = 1415901739037349037L;
-  
-  /** the explicit list of values to use. */
-  protected String[] m_List = new String[0];
-  
+
+  /** the custom list delimiter to use. */
+  protected String m_CustomDelimiter = "";
+
+  /** the list string of values. */
+  protected String m_ListStr = "";
+
   /**
    * Returns a string describing the object.
    * 
@@ -51,7 +54,9 @@ public class ListParameter
     return 
         "Container class defining the search parameters for a particular "
       + "property.\n"
-      + "Only the specified list values are used.";
+      + "Only the specified list values are used.\n"
+      + "A custom list delimiter can be defined as well. By default, "
+      + "a blank-separated list is used.";
   }
   
   /**
@@ -70,7 +75,12 @@ public class ListParameter
       result.add(enm);
 
     result.addElement(new Option(
-        "\tThe list of explicit values to use (blank-separated list).\n"
+        "\tThe custom list delimiter.\n"
+        + "\t(default: none)",
+        "custom-delimiter", 1, "-custom-delimiter <values>"));
+
+    result.addElement(new Option(
+        "\tThe list of explicit values to use.\n"
         + "\t(default: none)",
         "list", 1, "-list <values>"));
 
@@ -93,6 +103,11 @@ public class ListParameter
     for (i = 0; i < options.length; i++)
       result.add(options[i]);
 
+    if (!getCustomDelimiter().isEmpty()) {
+      result.add("-custom-delimiter");
+      result.add("" + getList());
+    }
+
     result.add("-list");
     result.add("" + getList());
 
@@ -107,7 +122,13 @@ public class ListParameter
    */
   public void setOptions(String[] options) throws Exception {
     String	tmpStr;
-    
+
+    tmpStr = Utils.getOption("custom-delimiter", options);
+    if (tmpStr.length() != 0)
+      setCustomDelimiter(tmpStr);
+    else
+      setCustomDelimiter("");
+
     tmpStr = Utils.getOption("list", options);
     if (tmpStr.length() != 0)
       setList(tmpStr);
@@ -123,39 +144,73 @@ public class ListParameter
    * @return 		tip text for this property suitable for
    * 			displaying in the explorer/experimenter gui
    */
+  public String customerDelimiterTipText() {
+    return "The custom list delimiter to use - blank-separated list by default.";
+  }
+
+  /**
+   * Get the custom delimiter to use.
+   *
+   * @return 		the delimiter.
+   */
+  public String getCustomDelimiter() {
+    return m_CustomDelimiter;
+  }
+  
+  /**
+   * Set the custom delimiter to use.
+   *
+   * @param value 	the delimiter.
+   */
+  public void setCustomDelimiter(String value) {
+    m_CustomDelimiter = value;
+  }
+
+  /**
+   * Returns the tip text for this property.
+   *
+   * @return 		tip text for this property suitable for
+   * 			displaying in the explorer/experimenter gui
+   */
   public String listTipText() {
     return "The blank-separated list of values to use.";
   }
 
   /**
-   * Get the blank-separated list of values.
+   * Get the list of values.
    *
    * @return 		the list.
    */
   public String getList() {
-    return Utils.joinOptions(m_List);
+    return m_ListStr;
   }
-  
+
   /**
-   * Set the blank-separated list of values.
+   * Set the list of values.
    *
    * @param value 	the list of values.
    */
   public void setList(String value) {
-    if (value.length() > 0) {
-      try {
-	m_List = Utils.splitOptions(value);
-      }
-      catch (Exception e) {
-	e.printStackTrace();
-	m_List = new String[0];
-      }
-    }
-    else {
-      m_List = new String[0];
-    }
+    m_ListStr = value;
   }
-  
+
+  /**
+   * Splits the list string using the appropriate delimiter.
+   *
+   * @return		the list items
+   * @throws Exception	if the splitting fails
+   */
+  public String[] getItems() throws Exception {
+    String[] 	result;
+
+    if (getCustomDelimiter().isEmpty())
+      result = Utils.splitOptions(getList());
+    else
+      result = getList().split(getCustomDelimiter());
+
+    return result;
+  }
+
   /**
    * Returns a string representation of the search parameter.
    * 
@@ -166,6 +221,8 @@ public class ListParameter
 
     result = super.toString();
     result += ", list: " + getList();
+    if (!getCustomDelimiter().isEmpty())
+      result += ", delimiter: '" + getCustomDelimiter() + "'";
     
     return result;
   }
