@@ -16,7 +16,8 @@ Parameters
   
 * `weka.core.setupgenerator.ListParameter`
 
-  blank-separated list of values
+  list of values; default is blank-separated, but a custom delimiter
+  can be supplied
   
 * `weka.core.setupgenerator.ParameterGroup`
 
