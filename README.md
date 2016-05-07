@@ -78,6 +78,10 @@ used as the base for the property paths):
 * components: `filter.numComponents`
 * ridge: `classifier.ridge`
 
+For more examples, please see the following repository:
+
+https://github.com/fracpete/multisearch-weka-package-examples
+
 
 Releases
 --------
