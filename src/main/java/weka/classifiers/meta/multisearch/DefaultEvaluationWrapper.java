@@ -41,6 +41,7 @@ public class DefaultEvaluationWrapper
    * Initializes the wrapper.
    *
    * @param eval the evaluation to wrap
+   * @param metrics	the metrics to use
    */
   public DefaultEvaluationWrapper(Evaluation eval, DefaultEvaluationMetrics metrics) {
     super(eval, metrics);
