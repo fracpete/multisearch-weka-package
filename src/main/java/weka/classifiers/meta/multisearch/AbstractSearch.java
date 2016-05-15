@@ -407,23 +407,42 @@ public abstract class AbstractSearch
    * @throws Exception	if search fails
    */
   public SearchResult search(Instances data) throws Exception {
+    SearchResult	result;
     SearchResult 	best;
 
-    log("\n"
-      + getClass().getName() + "\n"
-      + getClass().getName().replaceAll(".", "=") + "\n"
-      + "Options: " + Utils.joinOptions(getOptions()) + "\n");
+    try {
+      log("\n"
+	+ getClass().getName() + "\n"
+	+ getClass().getName().replaceAll(".", "=") + "\n"
+	+ "Options: " + Utils.joinOptions(getOptions()) + "\n");
 
-    log("\n---> check");
-    check(data);
+      log("\n---> check");
+      check(data);
 
-    log("\n---> preSearch");
-    preSearch(data);
+      log("\n---> preSearch");
+      preSearch(data);
 
-    log("\n---> doSearch");
-    best = doSearch(data);
+      log("\n---> doSearch");
+      best = doSearch(data);
 
-    log("\n---> postSearch");
-    return postSearch(data, best);
+      log("\n---> postSearch");
+      result = postSearch(data, best);
+    }
+    catch (Exception e) {
+      throw e;
+    }
+    finally {
+      cleanUpSearch();
+    }
+
+    return result;
+  }
+
+  /**
+   * Called after the search regardless whether successful or failed.
+   * <br>
+   * Default implementation does nothing.
+   */
+  public void cleanUpSearch() {
   }
 }
