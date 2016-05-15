@@ -23,11 +23,9 @@ package weka.classifiers.meta.multisearch;
 import weka.classifiers.Classifier;
 import weka.core.Instances;
 import weka.core.Option;
-import weka.core.SelectedTag;
 import weka.core.Utils;
 import weka.core.WekaException;
 import weka.core.converters.ConverterUtils.DataSource;
-import weka.core.setupgenerator.AbstractParameter;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
 import weka.filters.Filter;
@@ -62,7 +60,7 @@ import java.util.Vector;
  <!-- globalinfo-end -->
  *
  <!-- options-start -->
- * Valid options are: <p>
+ * Valid options are: <br>
  * 
  * <pre> -sample-size &lt;num&gt;
  *  The size (in percent) of the sample to search the inital space with.
@@ -192,9 +190,6 @@ public class DefaultSearch
   public Enumeration listOptions() {
     Vector result;
     Enumeration   	en;
-    String		desc;
-    SelectedTag tag;
-    int			i;
 
     result = new Vector();
 
@@ -288,10 +283,6 @@ public class DefaultSearch
   @Override
   public void setOptions(String[] options) throws Exception {
     String		tmpStr;
-    String[]		tmpOptions;
-    Vector<String>	search;
-    int			i;
-    AbstractParameter[]	params;
 
     tmpStr = Utils.getOption("sample-size", options);
     if (tmpStr.length() != 0)
