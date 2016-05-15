@@ -229,26 +229,21 @@ public abstract class AbstractMultiThreadedSearch
   @Override
   public void preSearch(Instances data) throws Exception {
     super.preSearch(data);
+    if (m_Debug)
+      System.out.println("Starting executor pool.");
     startExecutorPool();
   }
 
   /**
-   * Called after the search has been executed.
+   * Called after the search regardless whether successful or failed.
    * <br>
    * Stops the thread pool.
-   *
-   * @param data	the dataset to use
-   * @param best	the best classifier setup
-   * @return		the best classifier setup
-   * @throws Exception	if search fails
    */
   @Override
-  public SearchResult postSearch(Instances data, SearchResult best) throws Exception {
-    SearchResult	result;
-
-    result = super.postSearch(data, best);
+  public void cleanUpSearch() {
+    super.cleanUpSearch();
+    if (m_Debug)
+      System.out.println("Stopping executor pool.");
     stopExecutorPool();
-
-    return result;
   }
 }
