@@ -35,6 +35,8 @@ import java.util.Vector;
 public class ParameterGroup
   extends AbstractParameter {
 
+  private static final long serialVersionUID = -8833890695683415205L;
+
   /** the parameters. */
   protected AbstractParameter[] m_Parameters;
 
@@ -119,10 +121,7 @@ public class ParameterGroup
   }
 
   /**
-   * Parses the options for this object. <p/>
-   *
-   <!-- options-start -->
-   <!-- options-end -->
+   * Parses the options for this object.
    *
    * @param options	the options to use
    * @throws Exception	if setting of options fails
