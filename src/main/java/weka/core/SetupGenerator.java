@@ -15,7 +15,7 @@
 
 /*
  * SetupGenerator.java
- * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core;
@@ -42,7 +42,9 @@ import weka.core.setupgenerator.SpaceDimension;
 
 import java.beans.PropertyDescriptor;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -158,12 +160,12 @@ public class SetupGenerator
    * @return		the current options
    */
   public String[] getOptions() {
-    int       	i;
-    Vector    	result;
-    String[]  	options;
-    String	tmpStr;
+    int			i;
+    List<String> 	result;
+    String[]		options;
+    String 		tmpStr;
 
-    result = new Vector();
+    result = new ArrayList<String>();
 
     result.add("-W");
     result.add("" + getBaseObject().getClass().getName());
@@ -182,14 +184,11 @@ public class SetupGenerator
 	result.add(options[i]);
     }
 
-    return (String[]) result.toArray(new String[result.size()]);
+    return result.toArray(new String[result.size()]);
   }
 
   /**
-   * Parses the options for this object. <p/>
-   *
-   <!-- options-start -->
-   <!-- options-end -->
+   * Parses the options for this object.
    *
    * @param options	the options to use
    * @throws Exception	if setting of options fails
