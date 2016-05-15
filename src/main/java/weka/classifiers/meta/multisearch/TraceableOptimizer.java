@@ -53,7 +53,7 @@ public interface TraceableOptimizer {
    * Returns the folds of a given item in the trace.
    *
    * @param index	the index of the trace item to obtain
-   * @reutrn		the number of folds
+   * @return		the number of folds
    */
   public Integer getTraceFolds(int index);
 
