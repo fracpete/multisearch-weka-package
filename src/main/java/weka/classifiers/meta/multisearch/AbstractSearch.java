@@ -45,7 +45,9 @@ import java.util.Vector;
  * @version $Revision$
  */
 public abstract class AbstractSearch
-  implements Serializable, Cloneable, OptionHandler {
+  implements Serializable, Cloneable, OptionHandler, TraceableOptimizer {
+
+  private static final long serialVersionUID = -8938470419284825738L;
 
   /** for tracking the setups. */
   protected List<Entry<Integer, Performance>> m_Trace;
@@ -58,6 +60,8 @@ public abstract class AbstractSearch
    */
   public static class SearchResult
     implements Serializable {
+
+    private static final long serialVersionUID = -5322332623001051928L;
 
     public Classifier classifier = null;
     public Performance performance = null;
@@ -168,11 +172,9 @@ public abstract class AbstractSearch
    */
   @Override
   public String[] getOptions() {
-    int       		i;
-    Vector<String>    	result;
-    String[]  		options;
+    List<String>    	result;
 
-    result = new Vector<String>();
+    result = new ArrayList<String>();
 
     if (getDebug())
       result.add("-D");
