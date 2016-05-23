@@ -114,9 +114,9 @@ public abstract class AbstractSearch
   }
 
   /**
-   * Sets the owning classifier.
-   *
-   * @param value	the owner
+   * Returns the search dimensions
+   * 
+   * @return a List with string values of the search dimensions
    */
   public List<String> getSearchDimensions() {
     List<String> dimensions = new ArrayList<String>();
