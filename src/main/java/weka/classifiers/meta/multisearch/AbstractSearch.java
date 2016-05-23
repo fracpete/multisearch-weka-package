@@ -114,6 +114,19 @@ public abstract class AbstractSearch
   }
 
   /**
+   * Sets the owning classifier.
+   *
+   * @param value	the owner
+   */
+  public List<String> getSearchDimensions() {
+    List<String> dimensions = new ArrayList<String>();
+    for (int i = 0; i < m_Space.dimensions(); ++i) {
+      dimensions.add(m_Space.getDimension(i).getLabel());
+    }
+    return dimensions;
+  }
+
+  /**
    * Returns the current owner.
    *
    * @return		the owner, null if none set
