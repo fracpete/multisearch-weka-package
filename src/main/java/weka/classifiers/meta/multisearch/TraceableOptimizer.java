@@ -58,6 +58,13 @@ public interface TraceableOptimizer {
   public Integer getTraceFolds(int index);
 
   /**
+   * Returns the parameter settings in structured way
+   *
+   * @param index the index of the trace item to obtain
+   */
+  public List<Entry<String, String>> getTraceParamaterSettings(int index);
+
+  /**
    * Returns the full trace.
    *
    * @return		the full trace
