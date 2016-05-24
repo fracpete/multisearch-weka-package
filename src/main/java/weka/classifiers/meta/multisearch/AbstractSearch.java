@@ -347,6 +347,7 @@ public abstract class AbstractSearch
    * Returns the parameter settings in structured way
    *
    * @param index the index of the trace item to obtain
+   * @return the parameter settings
    */
   public List<Entry<String, String>> getTraceParamaterSettings(int index) {
     List<Entry<String, String>> result = new ArrayList<Map.Entry<String,String>>();
