@@ -23,6 +23,7 @@ package weka.classifiers.meta;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.RandomizableSingleClassifierEnhancer;
+import weka.classifiers.bayes.net.estimate.SimpleEstimator;
 import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.meta.multisearch.AbstractEvaluationFactory;
 import weka.classifiers.meta.multisearch.AbstractEvaluationMetrics;
@@ -56,10 +57,12 @@ import weka.core.setupgenerator.Space;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
 
@@ -890,6 +893,24 @@ public class MultiSearch
    */
   public Double getTraceValue(int index) {
     return m_Trace.get(index).getValue().getPerformance();
+  }
+  
+  /**
+   * Returns the parameter settings in structured way
+   * 
+   * @param index the index of the trace item to obtain
+   */
+  public List<Entry<String, String>> getTraceParamaterSettings(int index) {
+      List<Entry<String, String>> parameterSettings = new ArrayList<Map.Entry<String,String>>();
+      List<String> dimensions = m_Algorithm.getSearchDimensions();
+      for (int i = 0; i < dimensions.size(); ++i) {
+    	String parameter = dimensions.get(i);
+    	String value = (String) m_Trace.get(index).getValue().getValues().getValue(i);
+        Map.Entry<String, String> current = new AbstractMap.SimpleEntry<String,String>(parameter,value);
+        parameterSettings.add(i, current);
+      }
+      
+	  return parameterSettings;
   }
 
   /**
