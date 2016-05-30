@@ -105,7 +105,7 @@ public class ListParameter
 
     if (!getCustomDelimiter().isEmpty()) {
       result.add("-custom-delimiter");
-      result.add("" + getList());
+      result.add("" + getCustomDelimiter());
     }
 
     result.add("-list");
