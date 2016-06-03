@@ -23,7 +23,6 @@ package weka.classifiers.meta;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.RandomizableSingleClassifierEnhancer;
-import weka.classifiers.bayes.net.estimate.SimpleEstimator;
 import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.meta.multisearch.AbstractEvaluationFactory;
 import weka.classifiers.meta.multisearch.AbstractEvaluationMetrics;
@@ -93,8 +92,8 @@ import java.util.Vector;
  <!-- globalinfo-end -->
  *
  <!-- options-start -->
- * Valid options are: <p>
- * 
+ * Valid options are: <br>
+ *
  * <pre> -E &lt;CC|MCC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP|PREC|WPREC|REC|WREC|AUC|WAUC|PRC|WPRC|FM|WFM|TPR|TNR|FPR|FNR&gt;
  *  Determines the parameter used for evaluation:
  *  CC = Correlation coefficient
@@ -121,76 +120,76 @@ import java.util.Vector;
  *  FPR = False positive rate
  *  FNR = False negative rate
  *  (default: CC)</pre>
- * 
+ *
  * <pre> -search "&lt;classname options&gt;"
  *  A property search setup.
  * </pre>
- * 
+ *
  * <pre> -algorithm "&lt;classname options&gt;"
  *  A search algorithm.
  * </pre>
- * 
+ *
  * <pre> -log-file &lt;filename&gt;
  *  The log file to log the messages to.
  *  (default: none)</pre>
- * 
+ *
  * <pre> -S &lt;num&gt;
  *  Random number seed.
  *  (default 1)</pre>
- * 
+ *
  * <pre> -W
  *  Full name of base classifier.
  *  (default: weka.classifiers.functions.LinearRegression)</pre>
- * 
+ *
  * <pre> -output-debug-info
  *  If set, classifier is run in debug mode and
  *  may output additional info to the console</pre>
- * 
+ *
  * <pre> -do-not-check-capabilities
  *  If set, classifier capabilities are not checked before classifier is built
  *  (use with caution).</pre>
- * 
+ *
  * <pre> -num-decimal-places
  *  The number of decimal places for the output of numbers in the model (default 2).</pre>
- * 
+ *
  * <pre> 
  * Options specific to classifier weka.classifiers.functions.LinearRegression:
  * </pre>
- * 
+ *
  * <pre> -S &lt;number of selection method&gt;
  *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
  *  (default 0 = M5' method)</pre>
- * 
+ *
  * <pre> -C
  *  Do not try to eliminate colinear attributes.
  * </pre>
- * 
+ *
  * <pre> -S &lt;number of selection method&gt;
  *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
  *  (default 0 = M5' method)</pre>
- * 
+ *
  * <pre> -R &lt;double&gt;
  *  Set ridge parameter (default 1.0e-8).
  * </pre>
- * 
+ *
  * <pre> -minimal
  *  Conserve memory, don't keep dataset header and means/stdevs.
  *  Model cannot be printed out if this option is enabled. (default: keep data)</pre>
- * 
+ *
  * <pre> -additional-stats
  *  Output additional statistics.</pre>
- * 
+ *
  * <pre> -output-debug-info
  *  If set, classifier is run in debug mode and
  *  may output additional info to the console</pre>
- * 
+ *
  * <pre> -do-not-check-capabilities
  *  If set, classifier capabilities are not checked before classifier is built
  *  (use with caution).</pre>
- * 
+ *
  * <pre> -num-decimal-places
  *  The number of decimal places for the output of numbers in the model (default 4).</pre>
- * 
+ *
  <!-- options-end -->
  *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
@@ -267,25 +266,25 @@ public class MultiSearch
   public String globalInfo() {
     return
       "Performs a search of an arbitrary number of parameters of a classifier "
-	+ "and chooses the best pair found for the actual filtering and training.\n"
-	+ "The default MultiSearch is using the following Classifier setup:\n"
-	+ "  LinearRegression, searching for the \"Ridge\"\n"
-	+ "The properties being explored are totally up to the user.\n"
-	+ "\n"
-	+ "E.g., if you have a FilteredClassifier selected as base classifier, "
-	+ "sporting a PLSFilter and you want to explore the number of PLS components, "
-	+ "then your property will be made up of the following components:\n"
-	+ " - filter: referring to the FilteredClassifier's property (= PLSFilter)\n"
-	+ " - numComponents: the actual property of the PLSFilter that we want to modify\n"
-	+ "And assembled, the property looks like this:\n"
-	+ "  filter.numComponents\n"
-	+ "\n"
-	+ "\n"
-	+ "The best classifier setup can be accessed after the buildClassifier "
-	+ "call via the getBestClassifier method.\n"
-	+ "\n"
+        + "and chooses the best pair found for the actual filtering and training.\n"
+        + "The default MultiSearch is using the following Classifier setup:\n"
+        + "  LinearRegression, searching for the \"Ridge\"\n"
+        + "The properties being explored are totally up to the user.\n"
+        + "\n"
+        + "E.g., if you have a FilteredClassifier selected as base classifier, "
+        + "sporting a PLSFilter and you want to explore the number of PLS components, "
+        + "then your property will be made up of the following components:\n"
+        + " - filter: referring to the FilteredClassifier's property (= PLSFilter)\n"
+        + " - numComponents: the actual property of the PLSFilter that we want to modify\n"
+        + "And assembled, the property looks like this:\n"
+        + "  filter.numComponents\n"
+        + "\n"
+        + "\n"
+        + "The best classifier setup can be accessed after the buildClassifier "
+        + "call via the getBestClassifier method.\n"
+        + "\n"
         + "The trace of setups evaluated can be accessed after the buildClassifier "
-	+ "call as well, using the following methods:\n"
+        + "call as well, using the following methods:\n"
         + "- getTrace()\n"
         + "- getTraceSize()\n"
         + "- getTraceValue(int)\n"
@@ -373,13 +372,13 @@ public class MultiSearch
     for (i = 0; i < m_Metrics.getTags().length; i++) {
       tag = new SelectedTag(m_Metrics.getTags()[i].getID(), m_Metrics.getTags());
       desc  +=   "\t" + tag.getSelectedTag().getIDStr()
-	+ " = " + tag.getSelectedTag().getReadable()
-	+ "\n";
+        + " = " + tag.getSelectedTag().getReadable()
+        + "\n";
     }
     result.addElement(new Option(
       "\tDetermines the parameter used for evaluation:\n"
-	+ desc
-	+ "\t(default: " + new SelectedTag(m_Metrics.getDefaultMetric(), m_Metrics.getTags()) + ")",
+        + desc
+        + "\t(default: " + new SelectedTag(m_Metrics.getDefaultMetric(), m_Metrics.getTags()) + ")",
       "E", 1, "-E " + Tag.toOptionList(m_Metrics.getTags())));
 
     result.addElement(new Option(
@@ -392,7 +391,7 @@ public class MultiSearch
 
     result.addElement(new Option(
       "\tThe log file to log the messages to.\n"
-	+ "\t(default: none)",
+        + "\t(default: none)",
       "log-file", 1, "-log-file <filename>"));
 
     en = super.listOptions();
@@ -460,12 +459,12 @@ public class MultiSearch
     do {
       tmpStr = Utils.getOption("search", options);
       if (tmpStr.length() > 0)
-	search.add(tmpStr);
+        search.add(tmpStr);
     }
     while (tmpStr.length() > 0);
     if (search.size() == 0) {
       for (i = 0; i < m_DefaultParameters.length; i++)
-	search.add(getCommandline(m_DefaultParameters[i]));
+        search.add(getCommandline(m_DefaultParameters[i]));
     }
     params = new AbstractParameter[search.size()];
     for (i = 0; i < search.size(); i++) {
@@ -590,7 +589,7 @@ public class MultiSearch
   public String evaluationTipText() {
     return
       "Sets the criterion for evaluating the classifier performance and "
-	+ "choosing the best one.";
+        + "choosing the best one.";
   }
 
   /**
@@ -767,10 +766,10 @@ public class MultiSearch
     while (iter.hasNext()) {
       capab = (Capability) iter.next();
       if (    (capab != Capability.BINARY_CLASS)
-	&& (capab != Capability.NOMINAL_CLASS)
-	&& (capab != Capability.NUMERIC_CLASS)
-	&& (capab != Capability.DATE_CLASS) )
-	result.disable(capab);
+        && (capab != Capability.NOMINAL_CLASS)
+        && (capab != Capability.NUMERIC_CLASS)
+        && (capab != Capability.DATE_CLASS) )
+        result.disable(capab);
     }
 
     // set dependencies
@@ -876,31 +875,33 @@ public class MultiSearch
   public int getTraceSize() {
     return m_Trace.size();
   }
-  
+
   /**
    * Returns the CLI string of a given item in the trace.
-   * 
+   *
    * @param index the index of the trace item to obtain
    */
   public String getTraceClassifierAsCli(int index) {
     return getCommandline(m_Trace.get(index).getValue().getClassifier());
   }
-  
+
   /**
    * Returns the performance score of a given item in the trace.
-   * 
+   *
    * @param index the index of the trace item to obtain
    */
   public Double getTraceValue(int index) {
     return m_Trace.get(index).getValue().getPerformance();
   }
-  
+
   /**
    * Returns the parameter settings in structured way
-   * 
+   *
    * @param index the index of the trace item to obtain
+   * @return the parameter settings
    */
   public List<Entry<String, String>> getTraceParamaterSettings(int index) {
+<<<<<<< HEAD
       List<Entry<String, String>> parameterSettings = new ArrayList<Map.Entry<String,String>>();
       List<String> dimensions = m_Algorithm.getSearchDimensions();
       for (int i = 0; i < dimensions.size(); ++i) {
@@ -911,6 +912,18 @@ public class MultiSearch
       }
       
 	  return parameterSettings;
+=======
+    List<Entry<String, String>> result = new ArrayList<Map.Entry<String,String>>();
+    List<String> dimensions = m_Algorithm.getSearchDimensions();
+    for (int i = 0; i < dimensions.size(); ++i) {
+      String parameter = dimensions.get(i);
+      String value = (String) m_Trace.get(index).getValue().getValues().getValue(i);
+      Map.Entry<String, String> current = new AbstractMap.SimpleEntry<String,String>(parameter,value);
+      result.add(i, current);
+    }
+
+    return result;
+>>>>>>> upstream/master
   }
 
   /**
@@ -944,11 +957,11 @@ public class MultiSearch
     groupCount = 0;
     for (i = 0; i < m_Parameters.length; i++) {
       if (m_Parameters[i] instanceof ParameterGroup)
-	groupCount++;
+        groupCount++;
     }
     if ((groupCount > 0) && (m_Parameters.length != groupCount))
       throw new IllegalStateException(
-	"Cannot mix " + ParameterGroup.class.getName() + " with other parameter types!");
+        "Cannot mix " + ParameterGroup.class.getName() + " with other parameter types!");
 
     if (groupCount > 0) {
       for (i = 0; i < m_Parameters.length; i++)
@@ -986,7 +999,7 @@ public class MultiSearch
     results = new ArrayList<SearchResult>();
     for (i = 0; i < groups.size(); i++) {
       if (groups.size() > 1)
-	log("\n---> group #" + (i+1));
+        log("\n---> group #" + (i+1));
 
       m_Generator = new SetupGenerator();
       m_Generator.setBaseObject(this);
@@ -1005,8 +1018,8 @@ public class MultiSearch
     if (results.size() > 1) {
       comp = new PerformanceComparator(getEvaluation().getSelectedTag().getID(), getMetrics());
       for (i = 1; i < results.size(); i++) {
-	if (comp.compare(results.get(i).performance, result.performance) < 0)
-	  result = results.get(i);
+        if (comp.compare(results.get(i).performance, result.performance) < 0)
+          result = results.get(i);
       }
     }
     m_BestClassifier = result;
@@ -1022,7 +1035,7 @@ public class MultiSearch
     if (m_Debug) {
       log("\n---> Trace (format: #. folds/performance - setup)");
       for (i = 0; i < getTraceSize(); i++)
-	log((i + 1) + ". " + getTraceFolds(i) + "/" + getTraceValue(i) + " - " + getTraceClassifierAsCli(i));
+        log((i + 1) + ". " + getTraceFolds(i) + "/" + getTraceValue(i) + " - " + getTraceClassifierAsCli(i));
     }
   }
 
@@ -1055,19 +1068,19 @@ public class MultiSearch
     }
     else {
       result.append(this.getClass().getName() + ":\n"
-	  + "Classifier: " + getCommandline(getBestClassifier()) + "\n\n");
+        + "Classifier: " + getCommandline(getBestClassifier()) + "\n\n");
       for (i = 0; i < m_Parameters.length; i++)
-	result.append((i+1) + ". parameter: " + m_Parameters[i] + "\n");
+        result.append((i+1) + ". parameter: " + m_Parameters[i] + "\n");
       result.append("Evaluation: " + getEvaluation().getSelectedTag().getReadable() + "\n"
-	+ "Coordinates: " + getBestCoordinates() + "\n");
+        + "Coordinates: " + getBestCoordinates() + "\n");
 
       result.append("Values: " + getBestValues() + "\n\n" + m_Classifier.toString());
 
       if (m_Debug) {
-	result.append("\n\nTrace (format: #. folds/performance - setup):\n");
-	for (i = 0; i < getTraceSize(); i++) {
-	  result.append("\n" + (i + 1) + ". " + getTraceFolds(i) + "/" + getTraceValue(i) + " - " + getTraceClassifierAsCli(i));
-	}
+        result.append("\n\nTrace (format: #. folds/performance - setup):\n");
+        for (i = 0; i < getTraceSize(); i++) {
+          result.append("\n" + (i + 1) + ". " + getTraceFolds(i) + "/" + getTraceValue(i) + " - " + getTraceClassifierAsCli(i));
+        }
       }
     }
 

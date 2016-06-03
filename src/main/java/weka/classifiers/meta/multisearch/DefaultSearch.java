@@ -23,11 +23,9 @@ package weka.classifiers.meta.multisearch;
 import weka.classifiers.Classifier;
 import weka.core.Instances;
 import weka.core.Option;
-import weka.core.SelectedTag;
 import weka.core.Utils;
 import weka.core.WekaException;
 import weka.core.converters.ConverterUtils.DataSource;
-import weka.core.setupgenerator.AbstractParameter;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
 import weka.filters.Filter;
@@ -62,7 +60,7 @@ import java.util.Vector;
  <!-- globalinfo-end -->
  *
  <!-- options-start -->
- * Valid options are: <p>
+ * Valid options are: <br>
  * 
  * <pre> -sample-size &lt;num&gt;
  *  The size (in percent) of the sample to search the inital space with.
@@ -115,6 +113,8 @@ import java.util.Vector;
  */
 public class DefaultSearch
   extends AbstractMultiThreadedSearch {
+
+  private static final long serialVersionUID = -3579744329581176799L;
 
   /** the sample size to search the initial space with. */
   protected double m_SampleSize = 100;
@@ -190,9 +190,6 @@ public class DefaultSearch
   public Enumeration listOptions() {
     Vector result;
     Enumeration   	en;
-    String		desc;
-    SelectedTag tag;
-    int			i;
 
     result = new Vector();
 
@@ -286,10 +283,6 @@ public class DefaultSearch
   @Override
   public void setOptions(String[] options) throws Exception {
     String		tmpStr;
-    String[]		tmpOptions;
-    Vector<String>	search;
-    int			i;
-    AbstractParameter[]	params;
 
     tmpStr = Utils.getOption("sample-size", options);
     if (tmpStr.length() != 0)
@@ -600,7 +593,7 @@ public class DefaultSearch
     else {
       log("Generating sample (" + getSampleSizePercent() + "%)");
       resample = new Resample();
-      resample.setRandomSeed(getOwner().getSeed());
+      resample.setRandomSeed(retrieveOwner().getSeed());
       resample.setSampleSizePercent(getSampleSizePercent());
       resample.setInputFormat(inst);
       sample = Filter.useFilter(inst, resample);

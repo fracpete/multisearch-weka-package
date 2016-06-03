@@ -44,6 +44,7 @@ public abstract class AbstractEvaluationWrapper<T, M extends AbstractEvaluationM
    * Initializes the wrapper.
    *
    * @param eval	the evaluation to wrap
+   * @param metrics	the metrics to use
    */
   public AbstractEvaluationWrapper(T eval, M metrics) {
     m_Metrics = metrics;

@@ -46,6 +46,7 @@ public class PerformanceComparator
    * initializes the comparator with the given performance measure.
    *
    * @param evaluation	the performance measure to use
+   * @param metrics	the metrics to use
    */
   public PerformanceComparator(int evaluation, AbstractEvaluationMetrics metrics) {
     super();

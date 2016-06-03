@@ -6,11 +6,93 @@ Can be used for optimizing an arbitrary number of parameters, in contrast to
 GridSearch which always requires you to optimize two parameters. However, it
 does not offer automatic search space extensions like GridSearch.
 
+
+Parameters
+----------
+
+* `weka.core.setupgenerator.MathParameter`
+
+  uses mathematical expression to compute the (numeric) parameters
+  
+* `weka.core.setupgenerator.ListParameter`
+
+  list of values; default is blank-separated, but a custom delimiter
+  can be supplied
+  
+* `weka.core.setupgenerator.ParameterGroup`
+
+  allows grouping of dependent parameters, e.g., setting on group sets the kernel 
+  of SMO to RFBKernel and explores the gamma option, another group sets the
+  kernel to PolyKernel and explores the exponent oponent.
+
+**Note:** array elements, e.g., the filters inside a `weka.filters.MultiFilter`
+can be accessed using `[n]` with `n` being the 0-based index. E.g., if the
+third filter inside a `MultiFilter` is a `PLSFilter`, then its `numComponents`
+property can be accessed with `filters[2].numComponents`.
+
+
+Supported parameter types
+-------------------------
+
+* char, string
+* float, double
+* int, long
+* boolean
+* `weka.core.SelectedTag`
+* Java classname
+
+
+Search space exploration
+------------------------
+
+The search space of setups can be explored with different strategies, derived
+from `weka.classifiers.meta.multisearch.AbstractSearch`. The following 
+strategies are available:
+
+* `weka.classifiers.meta.multisearch.DefaultSearch`
+  
+  Exhaustive search of parameter space
+
+* `weka.classifiers.meta.multisearch.RandomSearch`
+
+  Random search of parameter space (contributed by [Jan van Rijn](https://github.com/janvanrijn))
+
+
+Example
+-------
+
+With the following classifier setup:
+
+```
+weka.classifiers.meta.FilteredClassifier
+|
++- weka.filters.supervised.attribute.PLSFilter
+|
++- weka.classifiers.functions.LinearRegression
+```
+
+You can explore the filter's *PLS components* and classifier's *ridge* parameters
+by referencing these properties as follows (the MultiSearch's classifier is
+used as the base for the property paths):
+
+* components: `filter.numComponents`
+* ridge: `classifier.ridge`
+
+For more examples, please see the following repository:
+
+https://github.com/fracpete/multisearch-weka-package-examples
+
+
 Releases
 --------
 
 Click on one of the following links to download the corresponding Weka package:
 
+* [2016.5.31](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.31/multisearch-2016.5.31.zip)
+* [2016.5.25](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.25/multisearch-2016.5.25.zip)
+* [2016.5.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.15/multisearch-2016.5.15.zip)
+* [2016.4.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.30/multisearch-2016.4.30.zip)
+* [2016.4.25](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.25/multisearch-2016.4.25.zip)
 * [2016.4.14](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.14/multisearch-2016.4.14.zip)
 * [2016.1.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.30/multisearch-2016.1.30.zip)
 * [2016.1.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.15/multisearch-2016.1.15.zip)
@@ -38,7 +120,7 @@ Add the following dependency in your `pom.xml` to include the package:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>multisearch-weka-package</artifactId>
-      <version>2016.4.14</version>
+      <version>2016.5.31</version>
       <type>jar</type>
       <exclusions>
         <exclusion>

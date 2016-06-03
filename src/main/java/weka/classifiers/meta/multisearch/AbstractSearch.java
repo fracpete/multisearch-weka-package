@@ -35,6 +35,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
 
@@ -45,7 +46,9 @@ import java.util.Vector;
  * @version $Revision$
  */
 public abstract class AbstractSearch
-  implements Serializable, Cloneable, OptionHandler {
+  implements Serializable, Cloneable, OptionHandler, TraceableOptimizer {
+
+  private static final long serialVersionUID = -8938470419284825738L;
 
   /** for tracking the setups. */
   protected List<Entry<Integer, Performance>> m_Trace;
@@ -58,6 +61,8 @@ public abstract class AbstractSearch
    */
   public static class SearchResult
     implements Serializable {
+
+    private static final long serialVersionUID = -5322332623001051928L;
 
     public Classifier classifier = null;
     public Performance performance = null;
@@ -131,7 +136,7 @@ public abstract class AbstractSearch
    *
    * @return		the owner, null if none set
    */
-  public MultiSearch getOwner() {
+  public MultiSearch retrieveOwner() {
     return m_Owner;
   }
 
@@ -181,11 +186,9 @@ public abstract class AbstractSearch
    */
   @Override
   public String[] getOptions() {
-    int       		i;
-    Vector<String>    	result;
-    String[]  		options;
+    List<String>    	result;
 
-    result = new Vector<String>();
+    result = new ArrayList<String>();
 
     if (getDebug())
       result.add("-D");
@@ -341,6 +344,25 @@ public abstract class AbstractSearch
   }
 
   /**
+   * Returns the parameter settings in structured way
+   *
+   * @param index the index of the trace item to obtain
+   * @return the parameter settings
+   */
+  public List<Entry<String, String>> getTraceParamaterSettings(int index) {
+    List<Entry<String, String>> result = new ArrayList<Map.Entry<String,String>>();
+    List<String> dimensions = getSearchDimensions();
+    for (int i = 0; i < dimensions.size(); ++i) {
+      String parameter = dimensions.get(i);
+      String value = (String) m_Trace.get(index).getValue().getValues().getValue(i);
+      Map.Entry<String, String> current = new AbstractMap.SimpleEntry<String,String>(parameter,value);
+      result.add(i, current);
+    }
+
+    return result;
+  }
+
+  /**
    * Returns the full trace.
    */
   public List<Entry<Integer, Performance>> getTrace() {
@@ -420,23 +442,42 @@ public abstract class AbstractSearch
    * @throws Exception	if search fails
    */
   public SearchResult search(Instances data) throws Exception {
+    SearchResult	result;
     SearchResult 	best;
 
-    log("\n"
-      + getClass().getName() + "\n"
-      + getClass().getName().replaceAll(".", "=") + "\n"
-      + "Options: " + Utils.joinOptions(getOptions()) + "\n");
+    try {
+      log("\n"
+	+ getClass().getName() + "\n"
+	+ getClass().getName().replaceAll(".", "=") + "\n"
+	+ "Options: " + Utils.joinOptions(getOptions()) + "\n");
 
-    log("\n---> check");
-    check(data);
+      log("\n---> check");
+      check(data);
 
-    log("\n---> preSearch");
-    preSearch(data);
+      log("\n---> preSearch");
+      preSearch(data);
 
-    log("\n---> doSearch");
-    best = doSearch(data);
+      log("\n---> doSearch");
+      best = doSearch(data);
 
-    log("\n---> postSearch");
-    return postSearch(data, best);
+      log("\n---> postSearch");
+      result = postSearch(data, best);
+    }
+    catch (Exception e) {
+      throw e;
+    }
+    finally {
+      cleanUpSearch();
+    }
+
+    return result;
+  }
+
+  /**
+   * Called after the search regardless whether successful or failed.
+   * <br>
+   * Default implementation does nothing.
+   */
+  public void cleanUpSearch() {
   }
 }
