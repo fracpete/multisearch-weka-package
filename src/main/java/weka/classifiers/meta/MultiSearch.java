@@ -901,29 +901,16 @@ public class MultiSearch
    * @return the parameter settings
    */
   public List<Entry<String, String>> getTraceParamaterSettings(int index) {
-<<<<<<< HEAD
       List<Entry<String, String>> parameterSettings = new ArrayList<Map.Entry<String,String>>();
       List<String> dimensions = m_Algorithm.getSearchDimensions();
       for (int i = 0; i < dimensions.size(); ++i) {
     	String parameter = dimensions.get(i);
-    	String value = "" + m_Trace.get(index).getValue().getValues().getValue(i).toString();
+    	String value = m_Trace.get(index).getValue().getValues().getValue(i).toString();
     	Map.Entry<String, String> current = new AbstractMap.SimpleEntry<String,String>(parameter,value);
     	parameterSettings.add(i, current);
       }
       
 	  return parameterSettings;
-=======
-    List<Entry<String, String>> result = new ArrayList<Map.Entry<String,String>>();
-    List<String> dimensions = m_Algorithm.getSearchDimensions();
-    for (int i = 0; i < dimensions.size(); ++i) {
-      String parameter = dimensions.get(i);
-      String value = (String) m_Trace.get(index).getValue().getValues().getValue(i);
-      Map.Entry<String, String> current = new AbstractMap.SimpleEntry<String,String>(parameter,value);
-      result.add(i, current);
-    }
-
-    return result;
->>>>>>> upstream/master
   }
 
   /**
