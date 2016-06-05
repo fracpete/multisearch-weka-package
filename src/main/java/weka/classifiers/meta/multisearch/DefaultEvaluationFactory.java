@@ -68,10 +68,11 @@ public class DefaultEvaluationFactory
    * @param values	the values
    * @param folds	the number of folds
    * @param eval	the evaluation
+   * @param classLabel	the class label index (0-based; if applicable)
    * @return		the task
    */
   @Override
-  public DefaultEvaluationTask newTask(MultiSearch owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval) {
-    return new DefaultEvaluationTask(owner, train, test, generator, values, folds, eval);
+  public DefaultEvaluationTask newTask(MultiSearch owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel) {
+    return new DefaultEvaluationTask(owner, train, test, generator, values, folds, eval, classLabel);
   }
 }

@@ -378,6 +378,7 @@ public class RandomSearch
     Performance p1;
     Performance p2;
     AbstractEvaluationTask newTask;
+    int classLabel;
 
     m_Performances.clear();
 
@@ -393,6 +394,10 @@ public class RandomSearch
     m_Completed = 0;
     m_NumSetups = Math.min(space.size(), m_NumIterations);
     Collections.shuffle(enm, random);
+    if (train.classAttribute().isNominal())
+      classLabel = m_Owner.getClassLabelIndex(train.classAttribute().numValues());
+    else
+      classLabel = -1;
 
     for (int i = 0; i < m_NumSetups; ++i) {
       values = enm.get(i);
@@ -408,7 +413,8 @@ public class RandomSearch
       } else {
 	newTask = m_Owner.getFactory().newTask(m_Owner, train, test,
 	  m_Owner.getGenerator(), values, folds,
-	  m_Owner.getEvaluation().getSelectedTag().getID());
+	  m_Owner.getEvaluation().getSelectedTag().getID(),
+	  classLabel);
 	m_ExecutorPool.execute(newTask);
       }
     }

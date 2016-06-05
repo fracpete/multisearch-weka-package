@@ -46,11 +46,12 @@ public class DefaultEvaluationTask
    * @param values		the setup values
    * @param folds		the number of cross-validation folds
    * @param eval		the type of evaluation
+   * @param classLabel		the class label index (0-based; if applicable)
    */
   public DefaultEvaluationTask(
     MultiSearch owner, Instances train, Instances test,
-    SetupGenerator generator, Point<Object> values, int folds, int eval) {
-    super(owner, train, test, generator, values, folds, eval);
+    SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel) {
+    super(owner, train, test, generator, values, folds, eval, classLabel);
   }
 
   /**
@@ -114,6 +115,7 @@ public class DefaultEvaluationTask
       m_Values,
       m_Owner.getFactory().newWrapper(eval),
       m_Evaluation,
+      m_ClassLabel,
       (Classifier) m_Generator.setup((Serializable) m_Owner.getClassifier(), evals));
     m_Owner.getAlgorithm().addPerformance(performance, m_Folds);
 

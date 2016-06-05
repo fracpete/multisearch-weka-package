@@ -61,9 +61,10 @@ public class DefaultEvaluationWrapper
    * Returns the metric for the given ID.
    *
    * @param id		the id to get the metric for
+   * @param classLabel  the class label index for which to return metric (if applicable)
    * @return		the metric
    */
-  public double getMetric(int id) {
+  public double getMetric(int id, int classLabel) {
     try {
       switch (id) {
         case DefaultEvaluationMetrics.EVALUATION_CC:
@@ -85,33 +86,33 @@ public class DefaultEvaluationWrapper
         case DefaultEvaluationMetrics.EVALUATION_KAPPA:
           return m_Evaluation.kappa();
         case DefaultEvaluationMetrics.EVALUATION_PRECISION:
-          return m_Evaluation.precision(0);
+          return m_Evaluation.precision(classLabel);
         case DefaultEvaluationMetrics.EVALUATION_WEIGHTED_PRECISION:
           return m_Evaluation.weightedPrecision();
         case DefaultEvaluationMetrics.EVALUATION_RECALL:
-          return m_Evaluation.recall(0);
+          return m_Evaluation.recall(classLabel);
         case DefaultEvaluationMetrics.EVALUATION_WEIGHTED_RECALL:
           return m_Evaluation.weightedRecall();
         case DefaultEvaluationMetrics.EVALUATION_AUC:
-          return m_Evaluation.areaUnderROC(0);
+          return m_Evaluation.areaUnderROC(classLabel);
         case DefaultEvaluationMetrics.EVALUATION_WEIGHTED_AUC:
           return m_Evaluation.weightedAreaUnderROC();
         case DefaultEvaluationMetrics.EVALUATION_PRC:
-          return m_Evaluation.areaUnderPRC(0);
+          return m_Evaluation.areaUnderPRC(classLabel);
         case DefaultEvaluationMetrics.EVALUATION_WEIGHTED_PRC:
           return m_Evaluation.weightedAreaUnderPRC();
         case DefaultEvaluationMetrics.EVALUATION_FMEASURE:
-          return m_Evaluation.fMeasure(0);
+          return m_Evaluation.fMeasure(classLabel);
         case DefaultEvaluationMetrics.EVALUATION_WEIGHTED_FMEASURE:
           return m_Evaluation.weightedFMeasure();
         case DefaultEvaluationMetrics.EVALUATION_TRUE_POSITIVE_RATE:
-          return m_Evaluation.truePositiveRate(0);
+          return m_Evaluation.truePositiveRate(classLabel);
         case DefaultEvaluationMetrics.EVALUATION_TRUE_NEGATIVE_RATE:
-          return m_Evaluation.trueNegativeRate(0);
+          return m_Evaluation.trueNegativeRate(classLabel);
         case DefaultEvaluationMetrics.EVALUATION_FALSE_POSITIVE_RATE:
-          return m_Evaluation.falsePositiveRate(0);
+          return m_Evaluation.falsePositiveRate(classLabel);
         case DefaultEvaluationMetrics.EVALUATION_FALSE_NEGATIVE_RATE:
-          return m_Evaluation.falseNegativeRate(0);
+          return m_Evaluation.falseNegativeRate(classLabel);
         default:
           return Double.NaN;
       }

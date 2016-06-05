@@ -45,6 +45,7 @@ import weka.core.RevisionUtils;
 import weka.core.SelectedTag;
 import weka.core.SerializedObject;
 import weka.core.SetupGenerator;
+import weka.core.SingleIndex;
 import weka.core.Summarizable;
 import weka.core.Tag;
 import weka.core.Utils;
@@ -87,13 +88,15 @@ import java.util.Vector;
  * - getTraceValue(int)<br>
  * - getTraceFolds(int)<br>
  * - getTraceClassifierAsCli(int)<br>
+ * - getTraceParamaterSettings(int)<br>
+ * <br>
  * Using the weka.core.setupgenerator.ParameterGroup parameter, it is possible to group dependent parameters. In this case, all top-level parameters must be of type weka.core.setupgenerator.ParameterGroup.
  * <br><br>
  <!-- globalinfo-end -->
  *
  <!-- options-start -->
- * Valid options are: <br>
- *
+ * Valid options are: <p>
+ * 
  * <pre> -E &lt;CC|MCC|RMSE|RRSE|MAE|RAE|COMB|ACC|KAP|PREC|WPREC|REC|WREC|AUC|WAUC|PRC|WPRC|FM|WFM|TPR|TNR|FPR|FNR&gt;
  *  Determines the parameter used for evaluation:
  *  CC = Correlation coefficient
@@ -105,91 +108,101 @@ import java.util.Vector;
  *  COMB = Combined = (1-abs(CC)) + RRSE + RAE
  *  ACC = Accuracy
  *  KAP = Kappa
- *  PREC = Precision
+ *  PREC = Precision (per class)
  *  WPREC = Weighted precision
- *  REC = Recall
+ *  REC = Recall (per class)
  *  WREC = Weighted recall
- *  AUC = Area under ROC
+ *  AUC = Area under ROC (per class)
  *  WAUC = Weighted area under ROC
- *  PRC = Area under PRC
+ *  PRC = Area under PRC (per class)
  *  WPRC = Weighted area under PRC
- *  FM = F-Measure
+ *  FM = F-Measure (per class)
  *  WFM = Weighted F-Measure
- *  TPR = True positive rate
- *  TNR = True negative rate
- *  FPR = False positive rate
- *  FNR = False negative rate
+ *  TPR = True positive rate (per class)
+ *  TNR = True negative rate (per class)
+ *  FPR = False positive rate (per class)
+ *  FNR = False negative rate (per class)
  *  (default: CC)</pre>
- *
+ * 
+ * <pre> -class-label "&lt;1-based index&gt;"
+ *  The class label index to retrieve the metric for (if applicable).
+ * </pre>
+ * 
  * <pre> -search "&lt;classname options&gt;"
  *  A property search setup.
  * </pre>
- *
+ * 
  * <pre> -algorithm "&lt;classname options&gt;"
  *  A search algorithm.
  * </pre>
- *
+ * 
  * <pre> -log-file &lt;filename&gt;
  *  The log file to log the messages to.
  *  (default: none)</pre>
- *
+ * 
  * <pre> -S &lt;num&gt;
  *  Random number seed.
  *  (default 1)</pre>
- *
+ * 
  * <pre> -W
  *  Full name of base classifier.
  *  (default: weka.classifiers.functions.LinearRegression)</pre>
- *
+ * 
  * <pre> -output-debug-info
  *  If set, classifier is run in debug mode and
  *  may output additional info to the console</pre>
- *
+ * 
  * <pre> -do-not-check-capabilities
  *  If set, classifier capabilities are not checked before classifier is built
  *  (use with caution).</pre>
- *
+ * 
  * <pre> -num-decimal-places
  *  The number of decimal places for the output of numbers in the model (default 2).</pre>
- *
+ * 
+ * <pre> -batch-size
+ *  The desired batch size for batch prediction  (default 100).</pre>
+ * 
  * <pre> 
  * Options specific to classifier weka.classifiers.functions.LinearRegression:
  * </pre>
- *
+ * 
  * <pre> -S &lt;number of selection method&gt;
  *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
  *  (default 0 = M5' method)</pre>
- *
+ * 
  * <pre> -C
  *  Do not try to eliminate colinear attributes.
  * </pre>
- *
+ * 
  * <pre> -S &lt;number of selection method&gt;
  *  Set the attribute selection method to use. 1 = None, 2 = Greedy.
  *  (default 0 = M5' method)</pre>
- *
+ * 
  * <pre> -R &lt;double&gt;
  *  Set ridge parameter (default 1.0e-8).
  * </pre>
- *
+ * 
  * <pre> -minimal
  *  Conserve memory, don't keep dataset header and means/stdevs.
  *  Model cannot be printed out if this option is enabled. (default: keep data)</pre>
- *
+ * 
  * <pre> -additional-stats
  *  Output additional statistics.</pre>
- *
+ * 
  * <pre> -output-debug-info
  *  If set, classifier is run in debug mode and
  *  may output additional info to the console</pre>
- *
+ * 
  * <pre> -do-not-check-capabilities
  *  If set, classifier capabilities are not checked before classifier is built
  *  (use with caution).</pre>
- *
+ * 
  * <pre> -num-decimal-places
  *  The number of decimal places for the output of numbers in the model (default 4).</pre>
- *
+ * 
+ * <pre> -batch-size
+ *  The desired batch size for batch prediction  (default 100).</pre>
+ * 
  <!-- options-end -->
  *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
@@ -213,6 +226,9 @@ public class MultiSearch
 
   /** the type of evaluation. */
   protected int m_Evaluation;
+
+  /** the class label index (if applicable). */
+  protected SingleIndex m_ClassLabel;
 
   /** the log file to use. */
   protected File m_LogFile = new File(System.getProperty("user.dir"));
@@ -241,6 +257,7 @@ public class MultiSearch
     m_Factory           = newFactory();
     m_Metrics           = m_Factory.newMetrics();
     m_Evaluation        = m_Metrics.getDefaultMetric();
+    m_ClassLabel        = new SingleIndex("1");
     m_Classifier        = defaultClassifier();
     m_DefaultParameters = defaultSearchParameters();
     m_Parameters        = defaultSearchParameters();
@@ -289,7 +306,8 @@ public class MultiSearch
         + "- getTraceSize()\n"
         + "- getTraceValue(int)\n"
         + "- getTraceFolds(int)\n"
-        + "- getTraceClassifierAsCli(int)"
+        + "- getTraceClassifierAsCli(int)\n"
+	+ "- getTraceParamaterSettings(int)\n"
         + "\n"
         + "Using the " + ParameterGroup.class.getName() + " parameter, it is "
         + "possible to group dependent parameters. In this case, all top-level "
@@ -382,6 +400,10 @@ public class MultiSearch
       "E", 1, "-E " + Tag.toOptionList(m_Metrics.getTags())));
 
     result.addElement(new Option(
+      "\tThe class label index to retrieve the metric for (if applicable).\n",
+      "class-label", 1, "-class-label \"<1-based index>\""));
+
+    result.addElement(new Option(
       "\tA property search setup.\n",
       "search", 1, "-search \"<classname options>\""));
 
@@ -410,7 +432,7 @@ public class MultiSearch
   public String[] getOptions() {
     int       		i;
     Vector<String>    	result;
-    String[]  		options;
+    String[] options;
 
     result = new Vector<String>();
 
@@ -421,6 +443,9 @@ public class MultiSearch
       result.add("-search");
       result.add(getCommandline(getSearchParameters()[i]));
     }
+
+    result.add("-class-label");
+    result.add(getClassLabel());
 
     result.add("-algorithm");
     result.add(getCommandline(m_Algorithm));
@@ -474,6 +499,12 @@ public class MultiSearch
       params[i]     = (AbstractParameter) Utils.forName(AbstractParameter.class, tmpStr, tmpOptions);
     }
     setSearchParameters(params);
+
+    tmpStr = Utils.getOption("class-label", options);
+    if (!tmpStr.isEmpty())
+      setClassLabel(tmpStr);
+    else
+      setClassLabel("1");
 
     tmpStr = Utils.getOption("algorithm", options);
     if (!tmpStr.isEmpty()) {
@@ -565,6 +596,49 @@ public class MultiSearch
    */
   public AbstractSearch getAlgorithm() {
     return m_Algorithm;
+  }
+
+  /**
+   * Returns the tip text for this property.
+   *
+   * @return 		tip text for this property suitable for
+   * 			displaying in the explorer/experimenter gui
+   */
+  public String classLabelTipText() {
+    return "The class label index (1-based) to retrieve the metrics for (if applicable).";
+  }
+
+  /**
+   * Sets the class label to retrieve the metrics for (if applicable).
+   *
+   * @param value	the class lable index (1-based)
+   */
+  public void setClassLabel(String value) {
+    m_ClassLabel.setSingleIndex(value);
+  }
+
+  /**
+   * Returns the class label to retrieve the metrics for (if applicable).
+   *
+   * @return		the class label index (1-based)
+   */
+  public String getClassLabel() {
+    return m_ClassLabel.getSingleIndex();
+  }
+
+  /**
+   * Returns the integer index.
+   *
+   * @param upper	the maximum to use
+   * @return		the index (0-based)
+   */
+  public int getClassLabelIndex(int upper) {
+    SingleIndex		index;
+
+    index = new SingleIndex(m_ClassLabel.getSingleIndex());
+    index.setUpper(upper);
+
+    return index.getIndex();
   }
 
   /**

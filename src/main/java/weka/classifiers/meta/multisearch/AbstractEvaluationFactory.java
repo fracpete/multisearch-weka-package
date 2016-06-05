@@ -63,7 +63,8 @@ public abstract class AbstractEvaluationFactory<M extends AbstractEvaluationMetr
    * @param values	the values
    * @param folds	the number of folds
    * @param eval	the evaluation
+   * @param classLabel	the class label index (0-based; if applicable)
    * @return		the task
    */
-  public abstract T newTask(MultiSearch owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval);
+  public abstract T newTask(MultiSearch owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel);
 }

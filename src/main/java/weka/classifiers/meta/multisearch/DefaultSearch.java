@@ -495,6 +495,7 @@ public class DefaultSearch
     Performance			p1;
     Performance			p2;
     AbstractEvaluationTask 	newTask;
+    int				classLabel;
 
     m_Performances.clear();
 
@@ -508,6 +509,10 @@ public class DefaultSearch
     m_Failed    = 0;
     m_Completed = 0;
     m_NumSetups = space.size();
+    if (train.classAttribute().isNominal())
+      classLabel = m_Owner.getClassLabelIndex(train.classAttribute().numValues());
+    else
+      classLabel = -1;
 
     while (enm.hasMoreElements()) {
       values = enm.nextElement();
@@ -522,7 +527,7 @@ public class DefaultSearch
       }
       else {
 	allCached = false;
-	newTask   = m_Owner.getFactory().newTask(m_Owner, train, test, m_Owner.getGenerator(), values, folds, m_Owner.getEvaluation().getSelectedTag().getID());
+	newTask   = m_Owner.getFactory().newTask(m_Owner, train, test, m_Owner.getGenerator(), values, folds, m_Owner.getEvaluation().getSelectedTag().getID(), classLabel);
 	m_ExecutorPool.execute(newTask);
       }
     }

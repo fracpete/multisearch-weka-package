@@ -15,7 +15,7 @@
 
 /**
  * AbstractEvaluationWrapper.java
- * Copyright (C) 2015 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2016 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -71,17 +71,19 @@ public abstract class AbstractEvaluationWrapper<T, M extends AbstractEvaluationM
    * Returns the metric for the given tag.
    *
    * @param tag		the tag to get the metric for
+   * @param classLabel  the class label index for which to return metric (if applicable)
    * @return		the metric
    */
-  public double getMetric(Tag tag) {
-    return getMetric(tag.getID());
+  public double getMetric(Tag tag, int classLabel) {
+    return getMetric(tag.getID(), classLabel);
   }
 
   /**
    * Returns the metric for the given ID.
    *
    * @param id		the id to get the metric for
+   * @param classLabel  the class label index for which to return metric (if applicable)
    * @return		the metric
    */
-  public abstract double getMetric(int id);
+  public abstract double getMetric(int id, int classLabel);
 }

@@ -47,6 +47,9 @@ public class Performance
   /** the evaluation type. */
   protected int m_Evaluation;
 
+  /** the class label index. */
+  protected int m_ClassLabel;
+
   /** the metrics. */
   protected AbstractEvaluationMetrics m_Metrics;
 
@@ -69,10 +72,11 @@ public class Performance
    * @param evaluation		the evaluation to extract the performance
    * 				measures from, can be null
    * @param evalType		the type of evaluation
+   * @param classLabel		the class label index (if applicable)
    * @param classifier		the classifier
    * @throws Exception	if retrieving of measures fails
    */
-  public Performance(Point<Object> values, AbstractEvaluationWrapper evaluation, int evalType, Classifier classifier) throws Exception {
+  public Performance(Point<Object> values, AbstractEvaluationWrapper evaluation, int evalType, int classLabel, Classifier classifier) throws Exception {
     this();
 
     m_Values       = values;
@@ -83,7 +87,7 @@ public class Performance
     if (evaluation != null) {
       m_Metrics = evaluation.getMetrics();
       for (Tag tag : evaluation.getMetrics().getTags()) {
-        m_MetricValues.put(tag.getID(), evaluation.getMetric(tag));
+        m_MetricValues.put(tag.getID(), evaluation.getMetric(tag, classLabel));
       }
     }
   }
@@ -100,6 +104,7 @@ public class Performance
     result                = new Performance();
     result.m_Values       = (Point<Object>) m_Values.clone();
     result.m_Evaluation   = m_Evaluation;
+    result.m_ClassLabel   = m_ClassLabel;
     result.m_Metrics      = m_Metrics;
     result.m_MetricValues = (HashMap<Integer,Double>) m_MetricValues.clone();
     result.m_Classifier   = m_Classifier;
@@ -114,6 +119,15 @@ public class Performance
    */
   public int getEvaluation() {
     return m_Evaluation;
+  }
+
+  /**
+   * Returns the class label index (may not be applicable).
+   *
+   * @return		the class label index
+   */
+  public int getClassLabel() {
+    return m_ClassLabel;
   }
 
   /**

@@ -52,6 +52,9 @@ public abstract class AbstractEvaluationTask
   /** the type of evaluation. */
   protected int m_Evaluation;
 
+  /** the class label index (0-based). */
+  protected int m_ClassLabel;
+
   /**
    * Initializes the task.
    *
@@ -62,10 +65,11 @@ public abstract class AbstractEvaluationTask
    * @param values		the setup values
    * @param folds		the number of cross-validation folds
    * @param eval		the type of evaluation
+   * @param classLabel		the class label index (0-based; if applicable)
    */
   public AbstractEvaluationTask(
     MultiSearch owner, Instances train, Instances test,
-    SetupGenerator generator, Point<Object> values, int folds, int eval) {
+    SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel) {
 
     super();
 
@@ -76,6 +80,7 @@ public abstract class AbstractEvaluationTask
     m_Values     = values;
     m_Folds      = folds;
     m_Evaluation = eval;
+    m_ClassLabel = classLabel;
 
     if (m_Test != null) {
       String msg = m_Train.equalHeadersMsg(m_Test);
