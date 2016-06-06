@@ -349,7 +349,7 @@ public abstract class AbstractSearch
    * @param index the index of the trace item to obtain
    * @return the parameter settings
    */
-  public List<Entry<String, Object>> getTraceParamaterSettings(int index) {
+  public List<Entry<String, Object>> getTraceParameterSettings(int index) {
     List<Entry<String, Object>> result = new ArrayList<Map.Entry<String,Object>>();
     List<String> dimensions = getSearchDimensions();
     for (int i = 0; i < dimensions.size(); ++i) {

@@ -63,7 +63,7 @@ public interface TraceableOptimizer {
    * @param index the index of the trace item to obtain
    * @return the parameter settings
    */
-  public List<Entry<String, Object>> getTraceParamaterSettings(int index);
+  public List<Entry<String, Object>> getTraceParameterSettings(int index);
 
   /**
    * Returns the full trace.
