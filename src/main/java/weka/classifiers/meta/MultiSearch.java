@@ -88,7 +88,7 @@ import java.util.Vector;
  * - getTraceValue(int)<br>
  * - getTraceFolds(int)<br>
  * - getTraceClassifierAsCli(int)<br>
- * - getTraceParamaterSettings(int)<br>
+ * - getTraceParameterSettings(int)<br>
  * <br>
  * Using the weka.core.setupgenerator.ParameterGroup parameter, it is possible to group dependent parameters. In this case, all top-level parameters must be of type weka.core.setupgenerator.ParameterGroup.
  * <br><br>
@@ -307,7 +307,7 @@ public class MultiSearch
         + "- getTraceValue(int)\n"
         + "- getTraceFolds(int)\n"
         + "- getTraceClassifierAsCli(int)\n"
-	+ "- getTraceParamaterSettings(int)\n"
+	+ "- getTraceParameterSettings(int)\n"
         + "\n"
         + "Using the " + ParameterGroup.class.getName() + " parameter, it is "
         + "possible to group dependent parameters. In this case, all top-level "
