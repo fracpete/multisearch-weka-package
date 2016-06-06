@@ -196,6 +196,7 @@
             <systemPropertyVariables>
               <weka.test.Regression.root>src/test/resources/wekarefs</weka.test.Regression.root>
             </systemPropertyVariables>
+            <useSystemClassLoader>false</useSystemClassLoader>
           </configuration>
         </plugin>
 
