@@ -349,13 +349,13 @@ public abstract class AbstractSearch
    * @param index the index of the trace item to obtain
    * @return the parameter settings
    */
-  public List<Entry<String, String>> getTraceParamaterSettings(int index) {
-    List<Entry<String, String>> result = new ArrayList<Map.Entry<String,String>>();
+  public List<Entry<String, Object>> getTraceParamaterSettings(int index) {
+    List<Entry<String, Object>> result = new ArrayList<Map.Entry<String,Object>>();
     List<String> dimensions = getSearchDimensions();
     for (int i = 0; i < dimensions.size(); ++i) {
       String parameter = dimensions.get(i);
-      String value = (String) m_Trace.get(index).getValue().getValues().getValue(i);
-      Map.Entry<String, String> current = new AbstractMap.SimpleEntry<String,String>(parameter,value);
+      Object value = m_Trace.get(index).getValue().getValues().getValue(i);
+      Map.Entry<String, Object> current = new AbstractMap.SimpleEntry<String,Object>(parameter,value);
       result.add(i, current);
     }
 
