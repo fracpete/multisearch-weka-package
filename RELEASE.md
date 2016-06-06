@@ -7,16 +7,16 @@ Preparation
 * Change the artifact ID in `pom.xml` to today's date, e.g.:
 
   ```
-  2014.12.31-SNAPSHOT
+  2016.6.6-SNAPSHOT
   ```
 
 * Update the version, date and URL in `Description.props` to reflect new
   version, e.g.:
 
   ```
-  Version=2014.12.31
-  Date=2014-12-31
-  PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2014.12.31/multisearch-2014.12.31.zip
+  Version=2016.6.6
+  Date=2016-06-06
+  PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.6.6/multisearch-2016.6.6.zip
   ```
 
 * Commit/push all changes
@@ -26,13 +26,13 @@ Weka package
 ------------
 
 * Run the following command to generate the package archive for version
-  `2014.12.31`:
+  `2016.6.6`:
 
   ```
-  ant -f build_package.xml -Dpackage=multisearch-2014.12.31 clean make_package
+  ant -f build_package.xml -Dpackage=multisearch-2016.6.6 clean make_package
   ```
 
-* Create a release tag on github (`v2014.12.31`)
+* Create a release tag on github (`v2016.6.6`)
 * add release notes
 * upload package archive from `dist`
 * add link to this zip file in the `Releases` section of the `README.md` file
