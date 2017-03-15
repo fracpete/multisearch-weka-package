@@ -15,7 +15,7 @@
 
 /**
  * DefaultEvaluationTask.java
- * Copyright (C) 2015-2016 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2017 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -112,6 +112,7 @@ public class DefaultEvaluationTask
 
     // store performance
     performance = new Performance(
+      m_ID,
       m_Values,
       m_Owner.getFactory().newWrapper(eval),
       m_Evaluation,

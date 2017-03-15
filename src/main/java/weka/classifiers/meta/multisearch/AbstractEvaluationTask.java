@@ -15,7 +15,7 @@
 
 /**
  * AbstractEvaluationTask.java
- * Copyright (C) 2015-2016 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2017 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -30,6 +30,12 @@ import weka.core.setupgenerator.Point;
  */
 public abstract class AbstractEvaluationTask
   implements Runnable {
+
+  /** the ID counter. */
+  protected static long m_Counter;
+
+  /** the ID of the task. */
+  protected long m_ID;
 
   /** the owner. */
   protected MultiSearch m_Owner;
@@ -73,6 +79,7 @@ public abstract class AbstractEvaluationTask
 
     super();
 
+    m_ID         = m_Counter++;
     m_Owner      = owner;
     m_Train      = train;
     m_Test       = test;
@@ -87,6 +94,15 @@ public abstract class AbstractEvaluationTask
       if (msg != null)
 	throw new IllegalArgumentException(msg);
     }
+  }
+
+  /**
+   * Returns the ID.
+   *
+   * @return		the ID
+   */
+  public long getID() {
+    return m_ID;
   }
 
   /**

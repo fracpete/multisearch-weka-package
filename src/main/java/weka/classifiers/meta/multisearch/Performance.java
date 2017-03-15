@@ -15,7 +15,7 @@
 
 /*
  * Performance.java
- * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2017 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.classifiers.meta.multisearch;
@@ -40,6 +40,9 @@ public class Performance
 
   /** for serialization. */
   private static final long serialVersionUID = -4374706475277588755L;
+
+  /** the ID of the container - used for making sorting stable. */
+  protected long m_ID;
 
   /** the values the filter/classifier were built with. */
   protected Point<Object> m_Values;
@@ -68,6 +71,7 @@ public class Performance
    * then the worst possible values for the measures are assumed (in order to
    * assure a low ranking).
    *
+   * @param id			the ID of the performance (used for comparison)
    * @param values		the values
    * @param evaluation		the evaluation to extract the performance
    * 				measures from, can be null
@@ -76,9 +80,10 @@ public class Performance
    * @param classifier		the classifier
    * @throws Exception	if retrieving of measures fails
    */
-  public Performance(Point<Object> values, AbstractEvaluationWrapper evaluation, int evalType, int classLabel, Classifier classifier) throws Exception {
+  public Performance(long id, Point<Object> values, AbstractEvaluationWrapper evaluation, int evalType, int classLabel, Classifier classifier) throws Exception {
     this();
 
+    m_ID           = id;
     m_Values       = values;
     m_Evaluation   = evalType;
     m_MetricValues = new HashMap<Integer, Double>();
@@ -102,6 +107,7 @@ public class Performance
     Performance		result;
 
     result                = new Performance();
+    result.m_ID           = m_ID;
     result.m_Values       = (Point<Object>) m_Values.clone();
     result.m_Evaluation   = m_Evaluation;
     result.m_ClassLabel   = m_ClassLabel;
@@ -110,6 +116,15 @@ public class Performance
     result.m_Classifier   = m_Classifier;
 
     return result;
+  }
+
+  /**
+   * Returns the ID.
+   *
+   * @return		the ID
+   */
+  public long getID() {
+    return m_ID;
   }
 
   /**
