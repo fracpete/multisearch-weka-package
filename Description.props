@@ -5,10 +5,10 @@
 PackageName=multisearch
 
 # Version (required)
-Version=2016.6.7
+Version=2017.3.28
 
 #Date (year-month-day)
-Date=2016-06-07
+Date=2017-03-28
 
 # Title (required)
 Title=MultiSearch Parameter Optimization
@@ -17,7 +17,7 @@ Title=MultiSearch Parameter Optimization
 Category=Classification
 
 # Author (required)
-Author=Peter Reutemann <fracpete@waikato.ac.nz>
+Author=Peter Reutemann, Jan van Rijn, Eibe Frank
 
 # Maintainer (required)
 Maintainer=Peter Reutemann <fracpete@waikato.ac.nz>
@@ -29,7 +29,7 @@ License=GPL 3.0
 Description=Generalized parameter optimization similar to GridSearch.
 
 # Package URL for obtaining the package archive (required)
-PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.6.7/multisearch-2016.6.7.zip
+PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2017.3.28/multisearch-2017.3.28.zip
 
 # URL for further information
 URL=https://github.com/fracpete/multisearch-weka-package

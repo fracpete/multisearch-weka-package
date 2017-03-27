@@ -5,7 +5,7 @@
 
   <groupId>com.github.fracpete</groupId>
   <artifactId>multisearch-weka-package</artifactId>
-  <version>2016.6.8-SNAPSHOT</version>
+  <version>2017.3.28-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>multisearch</name>
@@ -27,6 +27,14 @@
     <developer>
       <id>fracpete</id>
       <name>Peter Reutemann</name>
+    </developer>
+    <developer>
+      <id>jan</id>
+      <name>Jan Van Rijn</name>
+    </developer>
+    <developer>
+      <id>eibe</id>
+      <name>Eibe Frank</name>
     </developer>
   </developers>
 
