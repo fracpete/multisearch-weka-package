@@ -85,7 +85,7 @@ public class Point<E>
    */
   public boolean equals(Object obj) {
     Point<E> 	pd;
-    int	i;
+    int		i;
     
     if (obj == null)
       return false;
@@ -121,26 +121,25 @@ public class Point<E>
    * @param obj 	an object to be compared with this point
    * @return 		-1, 0, +1, in a manner consistent with equals
    */
-  public int compareTo(Point<E> pd) {
-
-    if (pd == null)
+  public int compareTo(Point<E> obj) {
+    if (obj == null)
       return -1; 
     
-    if (dimensions() != pd.dimensions())
+    if (dimensions() != obj.dimensions())
       return -1; 
     
     for (int i = 0; i < dimensions(); i++) {
-      if (getValue(i).getClass() != pd.getValue(i).getClass())
+      if (getValue(i).getClass() != obj.getValue(i).getClass())
         return -1;
 
       if (getValue(i) instanceof Double) {
-        if (Utils.sm((Double) getValue(i), (Double) pd.getValue(i))) { 
+        if (Utils.sm((Double) getValue(i), (Double) obj.getValue(i))) {
 	  return -1;
-	} else if (Utils.gr((Double) getValue(i), (Double) pd.getValue(i))) {
+	} else if (Utils.gr((Double) getValue(i), (Double) obj.getValue(i))) {
 	  return 1;
 	}
       } else {
-        int r = getValue(i).toString().compareTo(pd.getValue(i).toString());
+        int r = getValue(i).toString().compareTo(obj.getValue(i).toString());
 	if (r != 0) {
 	  return r;
 	}
