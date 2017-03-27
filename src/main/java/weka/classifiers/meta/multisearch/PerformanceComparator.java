@@ -98,7 +98,7 @@ public class PerformanceComparator
     else if (p1 > p2)
       result = 1;
     else
-      result = new Long(o1.getID()).compareTo(o2.getID());
+      result = o1.getValues().compareTo(o2.getValues());
 
     // only correlation coefficient/accuracy/kappa obey to this order, for the
     // errors (and the combination of all three), the smaller the number the

@@ -70,9 +70,9 @@ public class DefaultEvaluationTask
   /**
    * Performs the evaluation.
    *
-   * @throws Exception	if evaluation fails
+   * @return false	if evaluation fails
    */
-  protected void doRun() throws Exception {
+  protected Boolean doRun() throws Exception{
     Point<Object>	evals;
     Evaluation 		eval;
     Classifier 		classifier;
@@ -112,7 +112,6 @@ public class DefaultEvaluationTask
 
     // store performance
     performance = new Performance(
-      m_ID,
       m_Values,
       m_Owner.getFactory().newWrapper(eval),
       m_Evaluation,
@@ -123,8 +122,6 @@ public class DefaultEvaluationTask
     // log
     m_Owner.log(performance + ": cached=false");
 
-    // release slot
-    if (m_Owner.getAlgorithm() instanceof AbstractMultiThreadedSearch)
-      ((AbstractMultiThreadedSearch) m_Owner.getAlgorithm()).completedEvaluation(classifier, completed);
+    return completed;
   }
 }

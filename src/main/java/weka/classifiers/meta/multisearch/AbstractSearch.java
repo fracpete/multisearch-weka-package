@@ -78,13 +78,6 @@ public abstract class AbstractSearch
   /** the parameter space. */
   protected Space m_Space;
 
-  /** The number of setups completed so far. */
-  protected int m_Completed;
-
-  /** The number of setups that experienced a failure of some sort
-   * during construction. */
-  protected int m_Failed;
-
   /** the number of setups to evaluate. */
   protected int m_NumSetups;
 
@@ -284,15 +277,11 @@ public abstract class AbstractSearch
 
   /**
    * Adds the performance to the cache and the current list of performances.
-   * Does nothing if at least one setup failed.
    *
    * @param performance	the performance to add
    * @param folds	the number of folds
-   * @see		#m_Failed
    */
   public void addPerformance(Performance performance, int folds) {
-    if (m_Failed > 0)
-      return;
 
     m_Performances.add(performance);
     m_Cache.add(folds, performance);

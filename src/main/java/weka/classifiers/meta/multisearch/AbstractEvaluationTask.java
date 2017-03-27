@@ -24,18 +24,13 @@ import weka.classifiers.meta.MultiSearch;
 import weka.core.Instances;
 import weka.core.SetupGenerator;
 import weka.core.setupgenerator.Point;
+import java.util.concurrent.Callable;
 
 /**
  * Helper class for evaluating a setup.
  */
 public abstract class AbstractEvaluationTask
-  implements Runnable {
-
-  /** the ID counter. */
-  protected static long m_Counter;
-
-  /** the ID of the task. */
-  protected long m_ID;
+  implements Callable {
 
   /** the owner. */
   protected MultiSearch m_Owner;
@@ -79,7 +74,6 @@ public abstract class AbstractEvaluationTask
 
     super();
 
-    m_ID         = m_Counter++;
     m_Owner      = owner;
     m_Train      = train;
     m_Test       = test;
@@ -97,37 +91,20 @@ public abstract class AbstractEvaluationTask
   }
 
   /**
-   * Returns the ID.
-   *
-   * @return		the ID
-   */
-  public long getID() {
-    return m_ID;
-  }
-
-  /**
    * Performs the evaluation.
    *
-   * @throws Exception	if evaluation fails
+   * @return false if evaluation fails
    */
-  protected abstract void doRun() throws Exception;
+  protected abstract Boolean doRun() throws Exception;
 
   /**
    * Performs the evaluation.
    */
-  public void run() {
-    try {
-      doRun();
-    }
-    catch (Exception e) {
-      System.err.println("Encountered exception while evaluating classifier, skipping!");
-      System.err.println("- Values: " + m_Values);
-      e.printStackTrace();
-      if (m_Owner.getAlgorithm() instanceof AbstractMultiThreadedSearch)
-        ((AbstractMultiThreadedSearch) m_Owner.getAlgorithm()).completedEvaluation(m_Values, false);
-    }
+  public Boolean call() throws Exception {
 
+    Boolean result = doRun();
     cleanUp();
+    return result;
   }
 
   /**

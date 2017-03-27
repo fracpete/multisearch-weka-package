@@ -20,16 +20,14 @@
 
 package weka.classifiers.meta.multisearch;
 
-import weka.classifiers.Classifier;
 import weka.core.Instances;
 import weka.core.Option;
 import weka.core.Utils;
 
 import java.util.Enumeration;
 import java.util.Vector;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Ancestor for multi-threaded searches.
@@ -44,7 +42,7 @@ public abstract class AbstractMultiThreadedSearch
   protected int m_NumExecutionSlots = 1;
 
   /** Pool of threads to train models with. */
-  protected transient ThreadPoolExecutor m_ExecutorPool;
+  protected transient ExecutorService m_ExecutorPool;
 
   /**
    * Gets an enumeration describing the available options.
@@ -152,9 +150,7 @@ public abstract class AbstractMultiThreadedSearch
 
     log("Starting thread pool with " + m_NumExecutionSlots + " slots...");
 
-    m_ExecutorPool = new ThreadPoolExecutor(
-      m_NumExecutionSlots, m_NumExecutionSlots,
-      120, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+    m_ExecutorPool = Executors.newFixedThreadPool(m_NumExecutionSlots);
   }
 
   /**
@@ -167,55 +163,6 @@ public abstract class AbstractMultiThreadedSearch
       m_ExecutorPool.shutdownNow();
 
     m_ExecutorPool = null;
-  }
-
-  /**
-   * Helper method used for blocking.
-   *
-   * @param doBlock	whether to block or not
-   */
-  protected synchronized void block(boolean doBlock) {
-    if (doBlock) {
-      try {
-	wait();
-      }
-      catch (InterruptedException ex) {
-	// ignored
-      }
-    }
-    else {
-      notifyAll();
-    }
-  }
-
-  /**
-   * Records the completion of the training of a single classifier. Unblocks if
-   * all classifiers have been trained.
-   *
-   * @param obj		the classifier or setup values that was attempted to train
-   * @param success 	whether the classifier trained successfully
-   */
-  public synchronized void completedEvaluation(Object obj, boolean success) {
-    if (!success) {
-      m_Failed++;
-      if (m_Debug) {
-	if (obj instanceof Classifier)
-	  System.err.println("Training failed: " + getCommandline(obj));
-	else
-	  System.err.println("Training failed: " + obj);
-      }
-    }
-    else {
-      m_Completed++;
-    }
-
-    if (m_Completed + m_Failed == m_NumSetups) {
-      if (m_Failed > 0) {
-	if (m_Debug)
-	  System.err.println("Problem building classifiers - some failed to be trained.");
-      }
-      block(false);
-    }
   }
 
   /**

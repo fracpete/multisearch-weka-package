@@ -31,7 +31,7 @@ import java.io.Serializable;
  * @version $Revision: 4521 $
  */
 public class Point<E>
-  implements Serializable, Cloneable {
+  implements Serializable, Cloneable, Comparable<Point<E>> {
 
   /** for serialization. */
   private static final long serialVersionUID = 1061326306122503731L;
@@ -113,6 +113,41 @@ public class Point<E>
     }
     
     return true;
+  }
+
+  /**
+   * Compares the given point with this point.
+   * 
+   * @param obj 	an object to be compared with this point
+   * @return 		-1, 0, +1, in a manner consistent with equals
+   */
+  public int compareTo(Point<E> pd) {
+
+    if (pd == null)
+      return -1; 
+    
+    if (dimensions() != pd.dimensions())
+      return -1; 
+    
+    for (int i = 0; i < dimensions(); i++) {
+      if (getValue(i).getClass() != pd.getValue(i).getClass())
+        return -1;
+
+      if (getValue(i) instanceof Double) {
+        if (Utils.sm((Double) getValue(i), (Double) pd.getValue(i))) { 
+	  return -1;
+	} else if (Utils.gr((Double) getValue(i), (Double) pd.getValue(i))) {
+	  return 1;
+	}
+      } else {
+        int r = getValue(i).toString().compareTo(pd.getValue(i).toString());
+	if (r != 0) {
+	  return r;
+	}
+      }
+    }
+    
+    return 0;
   }
   
   /**

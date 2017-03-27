@@ -24,7 +24,6 @@ import weka.classifiers.Classifier;
 import weka.core.Instances;
 import weka.core.Option;
 import weka.core.Utils;
-import weka.core.WekaException;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
@@ -34,9 +33,11 @@ import weka.filters.unsupervised.instance.Resample;
 import java.io.File;
 import java.io.Serializable;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Vector;
+import java.util.concurrent.Future;
 
 /**
  <!-- globalinfo-start -->
@@ -87,10 +88,6 @@ import java.util.Vector;
  *  The (optional) test set to use for the subsequent sub-spaces.
  *  Gets ignored if pointing to a file. Overrides cross-validation.
  *  (default: .)</pre>
- * 
- * <pre> -num-slots &lt;num&gt;
- *  Number of execution slots.
- *  (default 1 - i.e. no parallelism)</pre>
  * 
  * <pre> -num-slots &lt;num&gt;
  *  Number of execution slots.
@@ -224,11 +221,6 @@ public class DefaultSearch
 	+ "\t(default: .)",
       "subsequent-test-set", 1, "-subsequent-test-set <filename>"));
 
-    result.addElement(new Option(
-      "\tNumber of execution slots.\n"
-	+ "\t(default 1 - i.e. no parallelism)",
-      "num-slots", 1, "-num-slots <num>"));
-
     en = super.listOptions();
     while (en.hasMoreElements())
       result.addElement(en.nextElement());
@@ -263,9 +255,6 @@ public class DefaultSearch
 
     result.add("-subsequent-test-set");
     result.add("" + getSubsequentSpaceTestSet());
-
-    result.add("-num-slots");
-    result.add("" + getNumExecutionSlots());
 
     options = super.getOptions();
     for (i = 0; i < options.length; i++)
@@ -313,12 +302,6 @@ public class DefaultSearch
       setSubsequentSpaceTestSet(new File(tmpStr));
     else
       setSubsequentSpaceTestSet(new File(System.getProperty("user.dir")));
-
-    tmpStr = Utils.getOption("num-slots", options);
-    if (tmpStr.length() != 0)
-      setNumExecutionSlots(Integer.parseInt(tmpStr));
-    else
-      setNumExecutionSlots(1);
 
     super.setOptions(options);
   }
@@ -506,14 +489,13 @@ public class DefaultSearch
 
     enm         = space.values();
     allCached   = true;
-    m_Failed    = 0;
-    m_Completed = 0;
     m_NumSetups = space.size();
     if (train.classAttribute().isNominal())
       classLabel = m_Owner.getClassLabelIndex(train.classAttribute().numValues());
     else
       classLabel = -1;
 
+    ArrayList<Future<Boolean>> results = new ArrayList<Future<Boolean>>();
     while (enm.hasMoreElements()) {
       values = enm.nextElement();
 
@@ -523,26 +505,30 @@ public class DefaultSearch
 	m_Performances.add(performance);
 	m_Trace.add(new AbstractMap.SimpleEntry<Integer, Performance>(folds, performance));
 	log(performance + ": cached=true");
-	m_Completed++;
       }
       else {
 	allCached = false;
 	newTask   = m_Owner.getFactory().newTask(m_Owner, train, test, m_Owner.getGenerator(), values, folds, m_Owner.getEvaluation().getSelectedTag().getID(), classLabel);
-	m_ExecutorPool.execute(newTask);
+	results.add(m_ExecutorPool.submit(newTask));
       }
     }
 
     // wait for execution to finish
-    if (m_Completed + m_Failed < m_NumSetups)
-      block(true);
+    try {
+	for (Future<Boolean> future : results) {
+	    if (!future.get()) {
+		throw new IllegalStateException("Execution of evaluaton thread failed.");
+	    }
+	}
+    } catch (Exception e) {
+	throw new IllegalStateException("Thread-based execution of evaluation tasks failed: " +
+					 e.getMessage());
+    }
 
     if (allCached) {
       log("All points were already cached - abnormal state!");
       throw new IllegalStateException("All points were already cached - abnormal state!");
     }
-
-    if (m_Failed > 0)
-      throw new WekaException("Failed to evaluate " + m_Failed + " setups!");
 
     // sort list
     Collections.sort(m_Performances, new PerformanceComparator(m_Owner.getEvaluation().getSelectedTag().getID(), m_Owner.getMetrics()));

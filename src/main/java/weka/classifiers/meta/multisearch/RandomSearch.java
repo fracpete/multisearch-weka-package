@@ -24,7 +24,6 @@ import weka.classifiers.Classifier;
 import weka.core.Instances;
 import weka.core.Option;
 import weka.core.Utils;
-import weka.core.WekaException;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
@@ -34,11 +33,13 @@ import weka.filters.unsupervised.instance.Resample;
 import java.io.File;
 import java.io.Serializable;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
+import java.util.concurrent.Future;
 
 public class RandomSearch
   extends AbstractMultiThreadedSearch {
@@ -140,9 +141,6 @@ public class RandomSearch
     result.add("-num-iterations");
     result.add("" + getNumIterations());
 
-    result.add("-num-slots");
-    result.add("" + getNumExecutionSlots());
-
     result.add("-S");
     result.add("" + getRandomSeed());
 
@@ -182,12 +180,6 @@ public class RandomSearch
       setSearchSpaceTestSet(new File(tmpStr));
     else
       setSearchSpaceTestSet(new File(System.getProperty("user.dir")));
-
-    tmpStr = Utils.getOption("num-slots", options);
-    if (tmpStr.length() != 0)
-      setNumExecutionSlots(Integer.parseInt(tmpStr));
-    else
-      setNumExecutionSlots(1);
 
     tmpStr = Utils.getOption("num-iterations", options);
     if (tmpStr.length() != 0)
@@ -390,8 +382,6 @@ public class RandomSearch
 	+ space + "\n");
 
     enm = Collections.list(space.values());
-    m_Failed = 0;
-    m_Completed = 0;
     m_NumSetups = Math.min(space.size(), m_NumIterations);
     Collections.shuffle(enm, random);
     if (train.classAttribute().isNominal())
@@ -399,6 +389,7 @@ public class RandomSearch
     else
       classLabel = -1;
 
+    ArrayList<Future<Boolean>> results = new ArrayList<Future<Boolean>>();
     for (int i = 0; i < m_NumSetups; ++i) {
       values = enm.get(i);
 
@@ -409,24 +400,25 @@ public class RandomSearch
 	m_Trace.add(new AbstractMap.SimpleEntry<Integer, Performance>(
 	  folds, performance));
 	log(performance + ": cached=true");
-	m_Completed++;
       } else {
 	newTask = m_Owner.getFactory().newTask(m_Owner, train, test,
 	  m_Owner.getGenerator(), values, folds,
 	  m_Owner.getEvaluation().getSelectedTag().getID(),
 	  classLabel);
-	m_ExecutorPool.execute(newTask);
+	results.add(m_ExecutorPool.submit(newTask));
       }
     }
 
     // wait for execution to finish
-    if (m_Completed + m_Failed < m_NumSetups) {
-      block(true);
-    }
-
-    if (m_Failed > 0) {
-      throw new WekaException("Failed to evaluate " + m_Failed
-	+ " setups!");
+    try {
+	for (Future<Boolean> future : results) {
+	    if (!future.get()) {
+		throw new IllegalStateException("Execution of evaluaton thread failed.");
+	    }
+	}
+    } catch (Exception e) {
+	throw new IllegalStateException("Thread-based execution of evaluation tasks failed: " +
+					 e.getMessage());
     }
 
     // sort list
