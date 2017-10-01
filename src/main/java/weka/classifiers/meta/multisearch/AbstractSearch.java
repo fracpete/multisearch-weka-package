@@ -13,15 +13,14 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
+/*
  * AbstractSearch.java
- * Copyright (C) 2016 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2016-2017 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.meta.MultiSearch;
 import weka.core.Instances;
 import weka.core.Option;
 import weka.core.OptionHandler;
@@ -70,7 +69,7 @@ public abstract class AbstractSearch
   }
 
   /** the owner. */
-  protected transient MultiSearch m_Owner;
+  protected transient MultiSearchCapable m_Owner;
 
   /** the debug flag. */
   protected boolean m_Debug;
@@ -107,7 +106,7 @@ public abstract class AbstractSearch
    *
    * @param value	the owner
    */
-  public void setOwner(MultiSearch value) {
+  public void setOwner(MultiSearchCapable value) {
     m_Owner = value;
   }
 
@@ -129,7 +128,7 @@ public abstract class AbstractSearch
    *
    * @return		the owner, null if none set
    */
-  public MultiSearch retrieveOwner() {
+  public MultiSearchCapable retrieveOwner() {
     return m_Owner;
   }
 

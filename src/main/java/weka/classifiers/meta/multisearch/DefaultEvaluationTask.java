@@ -22,7 +22,6 @@ package weka.classifiers.meta.multisearch;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
-import weka.classifiers.meta.MultiSearch;
 import weka.core.Instances;
 import weka.core.SetupGenerator;
 import weka.core.setupgenerator.Point;
@@ -49,7 +48,7 @@ public class DefaultEvaluationTask
    * @param classLabel		the class label index (0-based; if applicable)
    */
   public DefaultEvaluationTask(
-    MultiSearch owner, Instances train, Instances test,
+    MultiSearchCapable owner, Instances train, Instances test,
     SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel) {
     super(owner, train, test, generator, values, folds, eval, classLabel);
   }

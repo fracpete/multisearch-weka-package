@@ -13,17 +13,17 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
+/*
  * AbstractEvaluationTask.java
  * Copyright (C) 2015-2017 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
 
-import weka.classifiers.meta.MultiSearch;
 import weka.core.Instances;
 import weka.core.SetupGenerator;
 import weka.core.setupgenerator.Point;
+
 import java.util.concurrent.Callable;
 
 /**
@@ -33,7 +33,7 @@ public abstract class AbstractEvaluationTask
   implements Callable {
 
   /** the owner. */
-  protected MultiSearch m_Owner;
+  protected MultiSearchCapable m_Owner;
 
   /** the data to use for training. */
   protected Instances m_Train;
@@ -69,7 +69,7 @@ public abstract class AbstractEvaluationTask
    * @param classLabel		the class label index (0-based; if applicable)
    */
   public AbstractEvaluationTask(
-    MultiSearch owner, Instances train, Instances test,
+    MultiSearchCapable owner, Instances train, Instances test,
     SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel) {
 
     super();

@@ -21,7 +21,6 @@
 package weka.classifiers.meta.multisearch;
 
 import weka.classifiers.Evaluation;
-import weka.classifiers.meta.MultiSearch;
 import weka.core.Instances;
 import weka.core.SetupGenerator;
 import weka.core.setupgenerator.Point;
@@ -72,7 +71,7 @@ public class DefaultEvaluationFactory
    * @return		the task
    */
   @Override
-  public DefaultEvaluationTask newTask(MultiSearch owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel) {
+  public DefaultEvaluationTask newTask(MultiSearchCapable owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel) {
     return new DefaultEvaluationTask(owner, train, test, generator, values, folds, eval, classLabel);
   }
 }

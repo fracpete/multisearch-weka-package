@@ -20,7 +20,6 @@
 
 package weka.classifiers.meta.multisearch;
 
-import weka.classifiers.meta.MultiSearch;
 import weka.core.Instances;
 import weka.core.SetupGenerator;
 import weka.core.setupgenerator.Point;
@@ -66,5 +65,5 @@ public abstract class AbstractEvaluationFactory<M extends AbstractEvaluationMetr
    * @param classLabel	the class label index (0-based; if applicable)
    * @return		the task
    */
-  public abstract T newTask(MultiSearch owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel);
+  public abstract T newTask(MultiSearchCapable owner, Instances train, Instances test, SetupGenerator generator, Point<Object> values, int folds, int eval, int classLabel);
 }
