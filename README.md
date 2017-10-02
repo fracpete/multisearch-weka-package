@@ -23,7 +23,7 @@ Parameters
 
   allows grouping of dependent parameters, e.g., setting on group sets the kernel 
   of SMO to RFBKernel and explores the gamma option, another group sets the
-  kernel to PolyKernel and explores the exponent oponent.
+  kernel to PolyKernel and explores the exponent option.
 
 **Note:** array elements, e.g., the filters inside a `weka.filters.MultiFilter`
 can be accessed using `[n]` with `n` being the 0-based index. E.g., if the
