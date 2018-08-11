@@ -13,9 +13,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
+/*
  * DefaultSearch.java
- * Copyright (C) 2016 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2016-2018 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -36,7 +36,9 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
@@ -106,7 +108,6 @@ import java.util.concurrent.Future;
  * </ul>
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
- * @version $Revision$
  */
 public class DefaultSearch
   extends AbstractMultiThreadedSearch {
@@ -478,6 +479,7 @@ public class DefaultSearch
     Performance			p1;
     Performance			p2;
     AbstractEvaluationTask 	newTask;
+    List<Callable>		tasks;
     int				classLabel;
 
     m_Performances.clear();
@@ -495,6 +497,7 @@ public class DefaultSearch
     else
       classLabel = -1;
 
+    tasks = new ArrayList<Callable>();
     ArrayList<Future<Boolean>> results = new ArrayList<Future<Boolean>>();
     while (enm.hasMoreElements()) {
       values = enm.nextElement();
@@ -509,20 +512,24 @@ public class DefaultSearch
       else {
 	allCached = false;
 	newTask   = m_Owner.getFactory().newTask(m_Owner, train, test, m_Owner.getGenerator(), values, folds, m_Owner.getEvaluation().getSelectedTag().getID(), classLabel);
+	tasks.add(newTask);
 	results.add(m_ExecutorPool.submit(newTask));
       }
     }
 
     // wait for execution to finish
     try {
-	for (Future<Boolean> future : results) {
-	    if (!future.get()) {
-		throw new IllegalStateException("Execution of evaluaton thread failed.");
-	    }
+      for (i = 0; i < results.size(); i++) {
+	if (!results.get(i).get()) {
+	  System.err.println("Execution of evaluation thread failed:\n" + tasks.get(i));
+	  throw new IllegalStateException("Execution of evaluation thread failed:\n" + tasks.get(i));
 	}
-    } catch (Exception e) {
-	throw new IllegalStateException("Thread-based execution of evaluation tasks failed: " +
-					 e.getMessage());
+      }
+    }
+    catch (Exception e) {
+      System.err.println("Thread-based execution of evaluation tasks failed!");
+      e.printStackTrace();
+      throw new IllegalStateException("Thread-based execution of evaluation tasks failed!", e);
     }
 
     if (allCached) {

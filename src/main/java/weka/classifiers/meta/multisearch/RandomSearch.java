@@ -13,9 +13,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
+/*
  * RandomSearch.java
  * Copyright (C) 2016 Leiden University, NL
+ * Copyright (C) 2018 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -39,6 +40,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 public class RandomSearch
@@ -370,6 +372,7 @@ public class RandomSearch
     Performance p1;
     Performance p2;
     AbstractEvaluationTask newTask;
+    List<Callable> tasks;
     int classLabel;
 
     m_Performances.clear();
@@ -389,6 +392,7 @@ public class RandomSearch
     else
       classLabel = -1;
 
+    tasks = new ArrayList<Callable>();
     ArrayList<Future<Boolean>> results = new ArrayList<Future<Boolean>>();
     for (int i = 0; i < m_NumSetups; ++i) {
       values = enm.get(i);
@@ -411,14 +415,17 @@ public class RandomSearch
 
     // wait for execution to finish
     try {
-	for (Future<Boolean> future : results) {
-	    if (!future.get()) {
-		throw new IllegalStateException("Execution of evaluaton thread failed.");
-	    }
+      for (int i = 0; i < results.size(); i++) {
+	if (!results.get(i).get()) {
+	  System.err.println("Execution of evaluation thread failed:\n" + tasks.get(i));
+	  throw new IllegalStateException("Execution of evaluation thread failed:\n" + tasks.get(i));
 	}
-    } catch (Exception e) {
-	throw new IllegalStateException("Thread-based execution of evaluation tasks failed: " +
-					 e.getMessage());
+      }
+    }
+    catch (Exception e) {
+      System.err.println("Thread-based execution of evaluation tasks failed!");
+      e.printStackTrace();
+      throw new IllegalStateException("Thread-based execution of evaluation tasks failed!", e);
     }
 
     // sort list

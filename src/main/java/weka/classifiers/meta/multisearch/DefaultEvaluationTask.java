@@ -13,9 +13,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
+/*
  * DefaultEvaluationTask.java
- * Copyright (C) 2015-2017 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2018 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -69,7 +69,6 @@ public class DefaultEvaluationTask
   /**
    * Performs the evaluation.
    *
-   * @return false	if evaluation fails
    */
   protected Boolean doRun() throws Exception{
     Point<Object>	evals;
@@ -79,8 +78,16 @@ public class DefaultEvaluationTask
     boolean		completed;
 
     // setup
-    evals      = m_Generator.evaluate(m_Values);
-    classifier = (Classifier) m_Generator.setup((Serializable) m_Owner.getClassifier(), evals);
+    try {
+      evals = m_Generator.evaluate(m_Values);
+      classifier = (Classifier) m_Generator.setup((Serializable) m_Owner.getClassifier(), evals);
+    }
+    catch (Exception e) {
+      m_Exception = e;
+      System.err.println("Failed to configure classifier!");
+      e.printStackTrace();
+      return false;
+    }
 
     // evaluate
     try {
@@ -103,6 +110,7 @@ public class DefaultEvaluationTask
     }
     catch (Exception e) {
       eval = null;
+      m_Exception = e;
       System.err.println("Encountered exception while evaluating classifier, skipping!");
       System.err.println("- Classifier: " + m_Owner.getCommandline(classifier));
       e.printStackTrace();

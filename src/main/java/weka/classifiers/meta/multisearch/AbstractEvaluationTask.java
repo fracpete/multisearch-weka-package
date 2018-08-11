@@ -15,7 +15,7 @@
 
 /*
  * AbstractEvaluationTask.java
- * Copyright (C) 2015-2017 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2015-2018 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -24,6 +24,8 @@ import weka.core.Instances;
 import weka.core.SetupGenerator;
 import weka.core.setupgenerator.Point;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.Callable;
 
 /**
@@ -56,6 +58,9 @@ public abstract class AbstractEvaluationTask
   /** the class label index (0-based). */
   protected int m_ClassLabel;
 
+  /** an exception that occurred during evaluation. */
+  protected Exception m_Exception;
+
   /**
    * Initializes the task.
    *
@@ -82,6 +87,7 @@ public abstract class AbstractEvaluationTask
     m_Folds      = folds;
     m_Evaluation = eval;
     m_ClassLabel = classLabel;
+    m_Exception  = null;
 
     if (m_Test != null) {
       String msg = m_Train.equalHeadersMsg(m_Test);
@@ -101,9 +107,18 @@ public abstract class AbstractEvaluationTask
    * Performs the evaluation.
    */
   public Boolean call() throws Exception {
+    Boolean 	result;
 
-    Boolean result = doRun();
-    cleanUp();
+    try {
+      result = doRun();
+    }
+    catch (Exception e) {
+      m_Exception = e;
+      throw e;
+    }
+    finally {
+      cleanUp();
+    }
     return result;
   }
 
@@ -111,11 +126,33 @@ public abstract class AbstractEvaluationTask
    * Cleans up after the task finishes.
    */
   public void cleanUp() {
-    // clean up
     m_Owner     = null;
     m_Train     = null;
     m_Test      = null;
     m_Generator = null;
     m_Values    = null;
+  }
+
+  /**
+   * Outputs parameters of task.
+   *
+   * @return the parameters
+   */
+  @Override
+  public String toString() {
+    StringWriter	swriter;
+    PrintWriter		pwriter;
+
+    if (m_Exception != null) {
+      swriter = new StringWriter();
+      pwriter = new PrintWriter(swriter);
+      m_Exception.printStackTrace(pwriter);
+      pwriter.flush();
+      pwriter.close();
+      return "Error:\n" + swriter.toString();
+    }
+    else {
+      return "No error";
+    }
   }
 }
