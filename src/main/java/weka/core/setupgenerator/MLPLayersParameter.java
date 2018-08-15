@@ -14,8 +14,8 @@
  */
 
 /*
- * ListParameter.java
- * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
+ * MLPLayersParameter.java
+ * Copyright (C) 2008-2018 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
