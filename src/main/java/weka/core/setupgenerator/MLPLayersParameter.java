@@ -41,8 +41,11 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	/** for serialization. */
 	private static final long serialVersionUID = -5119694776105238138L;
 
-	/** default value for numLayers **/
-	protected final static int NUM_LAYERS_DEFAULT = 1;
+	/** default value for minLayers **/
+	protected final static int MIN_LAYERS_DEFAULT = 1;
+	
+	/** default value for maxLayers **/
+	protected final static int MAX_LAYERS_DEFAULT = 2;
 
 	/** default value for minLayerSize **/
 	protected final static int MIN_LAYER_SIZE_DEFAULT = 8;
@@ -50,9 +53,12 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	/** default value for maxLayerSize **/
 	protected final static int MAX_LAYER_SIZE_DEFAULT = 128;
 
-	/** the number of layers to generate. */
-	protected int m_NumLayers = NUM_LAYERS_DEFAULT;
-
+	/** the minimum numbers of layers. */
+	protected int m_MinLayers = MIN_LAYERS_DEFAULT;
+	
+	/** the maximum number of layers. */
+	protected int m_MaxLayers = MAX_LAYERS_DEFAULT;
+	
 	/** the minimum size of each layer **/
 	protected int m_MinLayerSize = MIN_LAYER_SIZE_DEFAULT;
 
@@ -68,9 +74,13 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	public String globalInfo() {
 		return "Container class defining the hiddenLayer search parameter "
 				+ "of the MultiLayerPerceptron.\n"
-				+ "Given numLayers, minLayerSize and maxLayerSize, it returns "
-				+ "a comma-separated string of numLayers numbers, such that"
-				+ "minLayerSize <= n <= maxLayerSize (for each layer n). ";
+				+ "Given minLayers, maxLayers, minLayerSize and maxLayerSize, "
+				+ "it generates a comma-separated string s integers, such that "
+				+ "minLayers <= s <= maxLayers, and for every integer n "
+				+ "minLayerSize <= n <= maxLayerSize. "
+				+ "NOTE: This is an experimental design. Due to the nature of"
+				+ "the API, all posibilities will be generated. Using many "
+				+ "layers (>2) or many nodes per layer is currently discouraged.";
 	}
 
 	/**
@@ -89,8 +99,12 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 			result.add(enm);
 
 		result.addElement(new Option(
-				"\tThe number of layers.\n" + "\t(default: " + NUM_LAYERS_DEFAULT + ")",
-				"numLayers", NUM_LAYERS_DEFAULT, "-numLayers <value>"));
+				"\tThe minimum number of layers.\n" + "\t(default: " + MIN_LAYERS_DEFAULT + ")",
+				"minLayers", MIN_LAYERS_DEFAULT, "-minLayers <value>"));
+		
+		result.addElement(new Option(
+				"\tThe maximal number of layers.\n" + "\t(default: " + MAX_LAYERS_DEFAULT + ")",
+				"maxLayers", MAX_LAYERS_DEFAULT, "-maxLayers <value>"));
 
 		result.addElement(new Option(
 				"\tTThe minimum size for each layer.\n" + "\t(default: "
@@ -121,8 +135,11 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 		for (i = 0; i < options.length; i++)
 			result.add(options[i]);
 
-		result.add("-numLayers");
-		result.add("" + getNumLayers());
+		result.add("-minLayers");
+		result.add("" + getMinLayers());
+		
+		result.add("-maxLayers");
+		result.add("" + getMaxLayers());
 
 		result.add("-minLayerSize");
 		result.add("" + getMinLayerSize());
@@ -144,11 +161,17 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	public void setOptions(String[] options) throws Exception {
 		String tmpStr;
 
-		tmpStr = Utils.getOption("numLayers", options);
+		tmpStr = Utils.getOption("minLayers", options);
 		if (tmpStr.length() != 0)
-			setNumLayers(Integer.parseInt(tmpStr));
+			setMinLayers(Integer.parseInt(tmpStr));
 		else
-			setNumLayers(NUM_LAYERS_DEFAULT);
+			setMinLayers(MIN_LAYERS_DEFAULT);
+		
+		tmpStr = Utils.getOption("maxLayers", options);
+		if (tmpStr.length() != 0)
+			setMaxLayers(Integer.parseInt(tmpStr));
+		else
+			setMaxLayers(MAX_LAYERS_DEFAULT);
 
 		tmpStr = Utils.getOption("minLayerSize", options);
 		if (tmpStr.length() != 0)
@@ -161,7 +184,9 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 			setMaxLayerSize(Integer.parseInt(tmpStr));
 		else
 			setMaxLayerSize(MIN_LAYER_SIZE_DEFAULT);
-
+		
+		checkStructureParams();
+		
 		super.setOptions(options);
 	}
 
@@ -171,8 +196,8 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	 * @return tip text for this property suitable for displaying in the
 	 *         explorer/experimenter gui
 	 */
-	public String numLayersTipText() {
-		return "The number of layers to generate";
+	public String minLayersTipText() {
+		return "The minimal number of layers to generate";
 	}
 
 	/**
@@ -180,18 +205,48 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	 * 
 	 * @return the number of layers to generate
 	 */
-	public int getNumLayers() {
-		return m_NumLayers;
+	public int getMinLayers() {
+		return m_MinLayers;
 	}
 
 	/**
 	 * Sets the value for this property.
 	 * 
 	 * @param the
-	 *          number of layers to generate
+	 *          minimal number of layers to generate
 	 */
-	public void setNumLayers(int numLayers) {
-		this.m_NumLayers = numLayers;
+	public void setMinLayers(int minLayers) {
+		this.m_MinLayers = minLayers;
+	}
+	
+
+	/**
+	 * Returns the tip text for this property.
+	 * 
+	 * @return tip text for this property suitable for displaying in the
+	 *         explorer/experimenter gui
+	 */
+	public String maxLayersTipText() {
+		return "The maximal number of layers to generate";
+	}
+
+	/**
+	 * Returns the value for this property.
+	 * 
+	 * @return the number of layers to generate
+	 */
+	public int getMaxLayers() {
+		return m_MaxLayers;
+	}
+
+	/**
+	 * Sets the value for this property.
+	 * 
+	 * @param the
+	 *          maximal number of layers to generate
+	 */
+	public void setMaxLayers(int maxLayers) {
+		this.m_MaxLayers = maxLayers;
 	}
 
 	/**
@@ -251,7 +306,22 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	public void setMaxLayerSize(int maxLayerSize) {
 		this.m_MaxLayerSize = maxLayerSize;
 	}
-
+	
+	private void checkStructureParams() throws Exception {
+		if (getMaxLayerSize() < getMinLayerSize()) {
+			throw new Exception(
+					"minLayerSize should be smaller than or equal to maxLayerSize");
+		}
+		if (getMaxLayers() < getMinLayers()) {
+			throw new Exception(
+					"minLayers should be smaller than or equal to maxLayers");
+		}
+		if (getMaxLayers() == getMinLayers() && getMaxLayerSize() == getMinLayerSize()) {
+			throw new Exception(
+					"no variation in layer structure possible");
+		}
+	}
+	
 	private String implodeList(List<Integer> list, String delimiter) {
 		StringBuilder sb = new StringBuilder();
 		for (Integer i : list) {
@@ -261,16 +331,21 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	}
 
 	private List<String> generateLayers(List<Integer> currentLayers) {
-		if (currentLayers.size() >= getNumLayers()) {
+		if (currentLayers.size() >= getMaxLayers()) {
 			List<String> result = new LinkedList<String>();
 			result.add(implodeList(currentLayers, ","));
 			return result;
 		} else {
 			List<String> result = new LinkedList<String>();
+			// add current result
+			if (currentLayers.size() >= getMinLayers()) {
+				result.add(implodeList(currentLayers, ","));
+			}
+			// generate layers of higher size
 			for (int i = getMinLayerSize(); i <= getMaxLayerSize(); ++i) {
 				currentLayers.add(i);
 				result.addAll(generateLayers(currentLayers));
-				currentLayers.remove(i);
+				currentLayers.remove(currentLayers.size()-1);
 			}
 			return result;
 		}
@@ -284,10 +359,7 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	 *           if the splitting fails
 	 */
 	public String[] getItems() throws Exception {
-		if (getMaxLayerSize() < getMinLayerSize()) {
-			throw new Exception(
-					"minLayerSize should be smaller than or equal to " + " maxLayerSize");
-		}
+		checkStructureParams();
 		List<String> result = generateLayers(new ArrayList<Integer>());
 		return result.toArray(new String[result.size()]);
 	}
@@ -301,7 +373,8 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 		String result;
 
 		result = super.toString();
-		result += ", numLayers: " + m_NumLayers;
+		result += ", minLayers: " + m_MinLayers;
+		result += ", maxLayers: " + m_MaxLayers;
 		result += ", minLayerSize: " + m_MinLayerSize;
 		result += ", maxLayerSize: " + m_MaxLayerSize;
 		return result;
