@@ -77,6 +77,11 @@ public class SpaceDimension
       String[] items = list.getItems();
       initList(0, items.length - 1, items, list.getProperty());
     }
+    else if (param instanceof MLPLayersParameter) {
+      MLPLayersParameter layers = (MLPLayersParameter) param;
+      String[] items = layers.getItems();
+      initList(0, items.length - 1, items, layers.getProperty());
+    }
     else {
       throw new IllegalStateException("Parameter class '" + param.getClass().getName() + "' not handled!");
     }
