@@ -23,10 +23,12 @@ package weka.core.setupgenerator;
 import weka.core.Option;
 import weka.core.Utils;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -41,6 +43,9 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	/** for serialization. */
 	private static final long serialVersionUID = -5119694776105238138L;
 
+	/** restricts the number of candidates that are being generated exhaustively **/
+	public final static int MAX_CANDIDATES_TO_GENERATE = 65536;
+	
 	/** default value for minLayers **/
 	protected final static int MIN_LAYERS_DEFAULT = 1;
 	
@@ -77,10 +82,7 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 				+ "Given minLayers, maxLayers, minLayerSize and maxLayerSize, "
 				+ "it generates a comma-separated string s integers, such that "
 				+ "minLayers <= s <= maxLayers, and for every integer n "
-				+ "minLayerSize <= n <= maxLayerSize. "
-				+ "NOTE: This is an experimental design. Due to the nature of"
-				+ "the API, all posibilities will be generated. Using many "
-				+ "layers (>2) or many nodes per layer is currently discouraged.";
+				+ "minLayerSize <= n <= maxLayerSize. ";
 	}
 
 	/**
@@ -307,6 +309,22 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 		this.m_MaxLayerSize = maxLayerSize;
 	}
 	
+	/**
+	 * Calculates the number of possible candidate structures
+	 * 
+	 * @return number of possible candidate structures
+	 */
+	public long calculateNumberOfCandidates() {
+		long result = 0L;
+		for (int i = getMinLayers(); i <= getMaxLayers(); ++i) {
+			result += Math.pow(getMaxLayerSize() - getMinLayerSize() + 1, i);
+		}
+		return result;
+	}
+	
+	/**
+	 * Checks the given parameters for simple constraint violations
+	 */
 	private void checkStructureParams() throws Exception {
 		if (getMaxLayerSize() < getMinLayerSize()) {
 			throw new Exception(
@@ -322,6 +340,13 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 		}
 	}
 	
+	/**
+	 * Converts a List of integers into a delimited string
+	 * 
+	 * @param list: the list to convert
+	 * @param delimiter: the separation string, typically a comma
+	 * @return the imploded list
+	 */
 	private String implodeList(List<Integer> list, String delimiter) {
 		StringBuilder sb = new StringBuilder();
 		for (Integer i : list) {
@@ -329,14 +354,49 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 		}
 		return sb.toString().substring(delimiter.length());
 	}
-
-	private List<String> generateLayers(List<Integer> currentLayers) {
+	
+	/**
+	 * Generates MLP layer structures randomly
+	 * 
+	 * @param numCandidates: the number of candidates to generate
+	 * @param seed: the random seed to use for the RNG
+	 * @return the layer structures
+	 */
+	private HashSet<String> generateCandicatesRandom(int numCandidates, long seed) {
+		Random random = new Random(seed);
+		HashSet<String> result = new HashSet<String>();
+		while (result.size() < numCandidates) {
+			List<Integer> current = new ArrayList<Integer>();
+			while (current.size() < getMaxLayers()) {
+				final int range = getMaxLayerSize() - getMinLayerSize() + 1;
+				final int currentLayerSize = random.nextInt(range) + getMinLayerSize();
+				current.add(currentLayerSize);
+				if (current.size() > getMinLayers()) {
+					String currentAsStr = implodeList(current, ",");
+					result.add(currentAsStr);
+					if (result.size() >= numCandidates) {
+						break;
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * Generates recursively all possible MLP layer structures within the 
+	 * constraints
+	 * 
+	 * @param currentLayers: partial generated layer
+	 * @return the layer structures
+	 */
+	private ArrayList<String> generateCandidatesExhaustive(ArrayList<Integer> currentLayers) {
 		if (currentLayers.size() >= getMaxLayers()) {
-			List<String> result = new LinkedList<String>();
+			ArrayList<String> result = new ArrayList<String>();
 			result.add(implodeList(currentLayers, ","));
 			return result;
 		} else {
-			List<String> result = new LinkedList<String>();
+			ArrayList<String> result = new ArrayList<String>();
 			// add current result
 			if (currentLayers.size() >= getMinLayers()) {
 				result.add(implodeList(currentLayers, ","));
@@ -344,7 +404,7 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 			// generate layers of higher size
 			for (int i = getMinLayerSize(); i <= getMaxLayerSize(); ++i) {
 				currentLayers.add(i);
-				result.addAll(generateLayers(currentLayers));
+				result.addAll(generateCandidatesExhaustive(currentLayers));
 				currentLayers.remove(currentLayers.size()-1);
 			}
 			return result;
@@ -360,7 +420,15 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
 	 */
 	public String[] getItems() throws Exception {
 		checkStructureParams();
-		List<String> result = generateLayers(new ArrayList<Integer>());
+		
+		AbstractCollection<String> result;
+		if (calculateNumberOfCandidates() >= MAX_CANDIDATES_TO_GENERATE) {
+			// Random seed does not need to be parameterized, as it will barely 
+			// influence results
+			result = generateCandicatesRandom(MAX_CANDIDATES_TO_GENERATE, 0L);
+		} else {
+			result = generateCandidatesExhaustive(new ArrayList<Integer>());
+		}
 		return result.toArray(new String[result.size()]);
 	}
 

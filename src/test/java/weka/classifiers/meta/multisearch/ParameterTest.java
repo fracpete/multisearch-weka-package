@@ -17,11 +17,12 @@ public class ParameterTest extends TestCase {
 		assertTrue(mlplayers.getMaxLayerSize() == 8);
 		String[] items = mlplayers.getItems();
 		int expectedSize = 30; // 5^1 + 5^2
+		assertTrue(expectedSize == mlplayers.calculateNumberOfCandidates());
 		assertTrue(items.length == expectedSize);
 	}
 	
 
-	public void testMLPLayersParamLarger() throws Exception {
+	public void testMLPLayersParamMedium() throws Exception {
 		MLPLayersParameter mlplayers = new MLPLayersParameter();
 		String options = "-minLayers 1 -maxLayers 4 -minLayerSize 9 -maxLayerSize 16";
 		mlplayers.setOptions(Utils.splitOptions(options));
@@ -32,7 +33,21 @@ public class ParameterTest extends TestCase {
 		assertTrue(mlplayers.getMaxLayerSize() == 16);
 		String[] items = mlplayers.getItems();
 		int expectedSize = 4680; // * 8^1 + 8^2 + 8^3 + 8^4
+		assertTrue(expectedSize == mlplayers.calculateNumberOfCandidates());
 		assertTrue(items.length == expectedSize);
+	}
+
+	public void testMLPLayersParamLarge() throws Exception {
+		MLPLayersParameter mlplayers = new MLPLayersParameter();
+		String options = "-minLayers 1 -maxLayers 32 -minLayerSize 128 -maxLayerSize 256";
+		mlplayers.setOptions(Utils.splitOptions(options));
+
+		assertTrue(mlplayers.getMinLayers() == 1);
+		assertTrue(mlplayers.getMaxLayers() == 32);
+		assertTrue(mlplayers.getMinLayerSize() == 128);
+		assertTrue(mlplayers.getMaxLayerSize() == 256);
+		String[] items = mlplayers.getItems();
+		assertTrue(items.length == MLPLayersParameter.MAX_CANDIDATES_TO_GENERATE);
 	}
 
 	public void testMLPLayersParamIllegalLayerSizeRaises() {
