@@ -25,7 +25,6 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 import weka.classifiers.meta.MultiSearch;
-import weka.classifiers.meta.multisearch.AbstractSearch.SearchResult;
 import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -37,7 +36,7 @@ import weka.core.setupgenerator.MLPLayersParameter;
 
 public class ParameterTest extends TestCase {
 
-  private static Instances getDummyData() {
+  private static Instances getDummyXORData() {
     List<String> values = new ArrayList<String>();
     values.add("0");
     values.add("1");
@@ -148,17 +147,19 @@ public class ParameterTest extends TestCase {
     String options = "-list \"true false\" -property \"unpruned\"";
     listparameter.setOptions(Utils.splitOptions(options));
     AbstractParameter[] searchParameters = { listparameter };
-
+    
     DefaultSearch searchAlgorithm = new DefaultSearch();
     searchAlgorithm.setNumExecutionSlots(1);
+    // first we need to run multisearch, to setup most variables OK
     MultiSearch multiSearch = new MultiSearch();
     multiSearch.setClassifier(new J48());
     multiSearch.setSearchParameters(searchParameters);
     multiSearch.setAlgorithm(searchAlgorithm);
-    multiSearch.buildClassifier(getDummyData());
+    multiSearch.buildClassifier(getDummyXORData());
     
+    // start new executor pool
     searchAlgorithm.startExecutorPool();
-    searchAlgorithm.determineBestInSpace(searchAlgorithm.m_Space, getDummyData(), getDummyData(), 1, false);
+    searchAlgorithm.determineBestInSpace(searchAlgorithm.m_Space, getDummyXORData(), getDummyXORData(), 1, false);
     
     Vector<Performance> results = searchAlgorithm.getPerformances();
 
