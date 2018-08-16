@@ -31,43 +31,43 @@ import java.io.Serializable;
  * @author  fracpete (fracpete at waikato dot ac dot nz)
  * @version $Revision: 4521 $
  */
-public class SpaceDimension 
+public class SpaceDimension
   implements Serializable {
-  
+
   /** for serialization. */
   private static final long serialVersionUID = -7709016830854739486L;
 
   /** the type of dimension. */
   protected int m_Type;
-  
+
   /** the minimum on the axis. */
   protected double m_Min;
-  
+
   /** the maximum on the axis. */
   protected double m_Max;
-  
+
   /** the step size for the axis. */
   protected double m_Step;
 
   /** the label for the axis. */
   protected String m_Label;
-  
+
   /** the number of points on the axis. */
   protected int m_Width;
-  
+
   /** the underlying list of values. */
   protected String[] m_List;
-  
+
   /**
    * initializes the dimension (for numeric values).
-   * 
+   *
    * @param param 	the search parameter to obtain the data from
    * @throws Exception	if splitting of list fails using Utils.splitOptions(String)
    * @see		Utils#splitOptions(String)
    */
   public SpaceDimension(AbstractParameter param) throws Exception {
     super();
-    
+
     if (param instanceof MathParameter) {
       MathParameter math = (MathParameter) param;
       initFunction(math.getMin(), math.getMax(), math.getStep(), math.getProperty());
@@ -86,10 +86,10 @@ public class SpaceDimension
       throw new IllegalStateException("Parameter class '" + param.getClass().getName() + "' not handled!");
     }
   }
-  
+
   /**
    * initializes the dimension (for numeric values).
-   * 
+   *
    * @param min 	the minimum on the axis
    * @param max 	the maximum on the axis
    * @param step 	the step size for the axis
@@ -97,13 +97,13 @@ public class SpaceDimension
    */
   public SpaceDimension(double min, double max, double step, String label) {
     super();
-    
+
     initFunction(min, max, step, label);
   }
-  
+
   /**
    * initializes the dimension (for list values).
-   * 
+   *
    * @param min 	the minimum index in the list (0-based index)
    * @param max 	the maximum index in the list (0-based index)
    * @param list 	the available values
@@ -111,13 +111,13 @@ public class SpaceDimension
    */
   public SpaceDimension(int min, int max, String[] list, String label) {
     super();
-    
+
     initList(min, max, list, label);
   }
-  
+
   /**
    * initializes the dimension (for numeric values).
-   * 
+   *
    * @param min 	the minimum on the axis
    * @param max 	the maximum on the axis
    * @param step 	the step size for the axis
@@ -131,26 +131,26 @@ public class SpaceDimension
     m_Label = label;
     m_Width = (int) StrictMath.round((m_Max - m_Min) / m_Step) + 1;
     m_List  = null;
-    
+
     // is min < max?
     if (m_Min >= m_Max)
       throw new IllegalArgumentException("Min must be smaller than Max!");
-    
+
     // steps positive?
     if (m_Step <= 0)
       throw new IllegalArgumentException("Step must be a positive number!");
-    
+
     // check borders
     if (!Utils.eq(m_Min + (m_Width-1)*m_Step, m_Max))
       throw new IllegalArgumentException(
-          "Axis doesn't match! Provided max: " + m_Max 
-          + ", calculated max via min and step size: " 
+        "Axis doesn't match! Provided max: " + m_Max
+          + ", calculated max via min and step size: "
           + (m_Min + (m_Width-1)*m_Step));
   }
-  
+
   /**
    * initializes the dimension (for list values).
-   * 
+   *
    * @param min 	the minimum index in the list (0-based index)
    * @param max 	the maximum index in the list (0-based index)
    * @param list 	the available values
@@ -164,44 +164,44 @@ public class SpaceDimension
     m_Label = label;
     m_Width = max - min + 1;
     m_List  = list.clone();
-    
+
     // min within range of list?
     if (m_Min >= m_List.length)
       throw new IllegalArgumentException(
-	  "Min must be smaller than list length (min=" + min + ", list=" + list.length + ")!");
+        "Min must be smaller than list length (min=" + min + ", list=" + list.length + ")!");
 
     // max within range of list?
     if (m_Max >= m_List.length)
       throw new IllegalArgumentException(
-	  "Max must be smaller than list length (max=" + max + ", list=" + list.length + ")!");
-    
+        "Max must be smaller than list length (max=" + max + ", list=" + list.length + ")!");
+
     // is min <= max?
     if (m_Min > m_Max)
       throw new IllegalArgumentException(
-	  "Min must be at most Max (min=" + min + ", max=" + max + ")!");
+        "Min must be at most Max (min=" + min + ", max=" + max + ")!");
   }
 
   /**
    * Tests itself against the provided dimension object.
-   * 
+   *
    * @param o		the dimension object to compare against
    * @return		if the two dimensions have the same setup
    */
   public boolean equals(Object o) {
     SpaceDimension	dim;
     int		i;
-    
+
     if (o == null)
       return false;
-    
+
     if (!(o instanceof SpaceDimension))
       return false;
-    
+
     dim = (SpaceDimension) o;
-    
+
     if (getType() != dim.getType())
       return false;
-    
+
     if (getType() == SetupGenerator.TYPE_FUNCTION) {
       if (width() != dim.width())
         return false;
@@ -218,7 +218,7 @@ public class SpaceDimension
     else if (getType() == SetupGenerator.TYPE_LIST) {
       if (getList().length != dim.getList().length)
         return false;
-      
+
       for (i = 0; i < getList().length; i++) {
         if (!getList()[i].equals(dim.getList()[i]))
           return false;
@@ -227,68 +227,68 @@ public class SpaceDimension
     else {
       throw new IllegalStateException("Type '" + getType() + "' not handled!");
     }
-    
+
     return true;
   }
-  
+
   /**
    * returns the tye of dimension.
-   * 
+   *
    * @return		the type
    */
   public int getType() {
     return m_Type;
   }
-  
+
   /**
    * returns the left border.
-   * 
+   *
    * @return 		the left border
    */
   public double getMin() {
     return m_Min;
   }
-  
+
   /**
    * returns the right border.
-   * 
+   *
    * @return 		the right border
    */
   public double getMax() {
     return m_Max;
   }
-  
+
   /**
    * returns the step size on the axis.
-   * 
+   *
    * @return 		the step size
    */
   public double getStep() {
     return m_Step;
   }
-  
+
   /**
    * returns the label for the axis.
-   * 
+   *
    * @return		the label
    */
   public String getLabel() {
     return m_Label;
   }
-  
+
   /**
    * returns the number of points on the axis (incl. borders)
-   * 
+   *
    * @return 		the number of points on the axis
    */
   public int width() {
     return m_Width;
   }
-  
+
   /**
    * Returns the list of values, null in case of a numeric dimension that
    * is based on a mathematical function.
-   * 
+   *
    * @return		the list
    */
   public String[] getList() {
@@ -297,7 +297,7 @@ public class SpaceDimension
 
   /**
    * returns the value at the given point in the dimension.
-   * 
+   *
    * @param x		the x-th point on the axis
    * @return		the value at the given position
    */
@@ -315,7 +315,7 @@ public class SpaceDimension
 
   /**
    * returns the closest index for the given value in the dimension.
-   * 
+   *
    * @param value	the value to get the index for
    * @return		the closest index in the dimension
    */
@@ -327,7 +327,7 @@ public class SpaceDimension
     String	valueStr;
 
     result = 0;
-    
+
     if (getType() == SetupGenerator.TYPE_FUNCTION) {
       // determine x
       distance = m_Step;
@@ -351,13 +351,13 @@ public class SpaceDimension
     else {
       throw new IllegalStateException("Type '" + getType() + "' not handled!");
     }
-    
+
     return result;
   }
 
   /**
    * checks whether the given value is on the border of the dimension.
-   * 
+   *
    * @param value		the value to check
    * @return			true if the the value is on the border
    */
@@ -367,7 +367,7 @@ public class SpaceDimension
 
   /**
    * checks whether the given location is on the border of the dimension.
-   * 
+   *
    * @param location 		the location to check
    * @return			true if the the location is on the border
    */
@@ -379,10 +379,10 @@ public class SpaceDimension
     else
       return false;
   }
-  
+
   /**
    * returns a sub-dimension with the same type/step/list, but different borders.
-   * 
+   *
    * @param left	the left index
    * @param right	the right index
    * @return 		the sub-dimension
@@ -395,10 +395,10 @@ public class SpaceDimension
     else
       throw new IllegalStateException("Type '" + getType() + "' not handled!");
   }
-  
+
   /**
    * Returns a string representation of the dimension.
-   * 
+   *
    * @return		a string representation
    */
   public String toString() {

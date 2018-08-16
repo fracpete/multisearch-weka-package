@@ -93,7 +93,7 @@ public class Space
 
     if (locations.dimensions() != dimensions())
       throw new IllegalArgumentException(
-          "Dimension mismatch: space=" + dimensions()
+        "Dimension mismatch: space=" + dimensions()
           + ", locations=" + locations.dimensions());
 
     values = new Object[locations.dimensions()];
@@ -118,7 +118,7 @@ public class Space
 
     if (values.dimensions() != dimensions())
       throw new IllegalArgumentException(
-          "Dimension mismatch: space=" + dimensions()
+        "Dimension mismatch: space=" + dimensions()
           + ", values=" + values.dimensions());
 
     locations = new Integer[values.dimensions()];
@@ -143,7 +143,7 @@ public class Space
 
     if (points.dimensions() != dimensions())
       throw new IllegalArgumentException(
-          "Dimension mismatch: space=" + dimensions()
+        "Dimension mismatch: space=" + dimensions()
           + ", points=" + points.dimensions());
 
     if (!(points.getValue(0) instanceof Integer))
@@ -177,7 +177,7 @@ public class Space
     dimensions = new SpaceDimension[dimensions()];
     for (i = 0; i < dimensions.length; i++)
       dimensions[i] = getDimension(i).subdimension(
-          			center.getValue(i) - 1, center.getValue(i) + 1);
+        center.getValue(i) - 1, center.getValue(i) + 1);
 
     result = new Space(dimensions);
 
