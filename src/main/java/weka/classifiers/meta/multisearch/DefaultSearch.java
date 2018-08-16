@@ -466,10 +466,12 @@ public class DefaultSearch
    * @param test	the test data to use, null if to use cross-validation
    * @param folds	the number of folds for cross-validation, if &lt;2 then
    * 			evaluation based on the training set is used
+   * @param postClean	cleans performance vector in the end. Defaults to true,
+   * 			only consider setting to false for testing purposes	
    * @return		the best point (not actual parameters!)
    * @throws Exception	if setup or training fails
    */
-  protected Performance determineBestInSpace(Space space, Instances train, Instances test, int folds) throws Exception {
+  protected Performance determineBestInSpace(Space space, Instances train, Instances test, int folds, boolean postClean) throws Exception {
     Performance			result;
     int				i;
     Enumeration<Point<Object>> enm;
@@ -557,10 +559,21 @@ public class DefaultSearch
 
     logPerformances(space, m_Performances);
     log("\nBest performance:\n" + m_Performances.firstElement());
-
-    m_Performances.clear();
+    
+    if (postClean) {
+      m_Performances.clear();
+    }
 
     return result;
+  }
+  
+  /**
+   * Returns the performances of the last determineBestInSpace run, if
+   * this was ran with postClean argument set to false (for testing)
+   * @return vector of performances
+   */
+  public Vector<Performance> getPerformances() {
+    return m_Performances;
   }
 
   /**
@@ -602,7 +615,7 @@ public class DefaultSearch
 
     // find first center
     log("\n=== Initial space - Start ===");
-    result = determineBestInSpace(m_Space, sample, m_InitialSpaceTestInst, m_InitialSpaceNumFolds);
+    result = determineBestInSpace(m_Space, sample, m_InitialSpaceTestInst, m_InitialSpaceNumFolds, true);
     log("\nResult of Step 1: " + result + "\n");
     log("=== Initial space - End ===\n");
 
@@ -623,7 +636,7 @@ public class DefaultSearch
 	// around it
 	if (!finished) {
 	  neighborSpace = m_Space.subspace(center);
-	  result = determineBestInSpace(neighborSpace, sample, m_SubsequentSpaceTestInst, m_SubsequentSpaceNumFolds);
+	  result = determineBestInSpace(neighborSpace, sample, m_SubsequentSpaceTestInst, m_SubsequentSpaceNumFolds, true);
 	  log("\nResult of Step 2/Iteration " + (iteration) + ":\n" + result);
 	  finished = m_UniformPerformance;
 
