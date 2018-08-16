@@ -156,7 +156,7 @@ public class ParameterTest extends TestCase {
       MultilayerPerceptron current = (MultilayerPerceptron) result.m_Classifier;
       expectedValues.put(current.getHiddenLayers(), true);
     }
-    assertTrue(expectedValues.get("2, 2") && expectedValues.get("2, 3") && expectedValues.get("3, 2"));
+    assertTrue(expectedValues.get("2, 2") && expectedValues.get("2, 3") && expectedValues.get("3, 2") && expectedValues.get("3, 3"));
   }
 
   public void testMLPLayersParamIllegalLayerSizeRaises() {
