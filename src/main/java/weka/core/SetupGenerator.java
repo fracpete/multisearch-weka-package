@@ -35,6 +35,7 @@ import weka.core.expressionlanguage.parser.Parser;
 import weka.core.setupgenerator.AbstractParameter;
 import weka.core.setupgenerator.AbstractPropertyParameter;
 import weka.core.setupgenerator.ListParameter;
+import weka.core.setupgenerator.MLPLayersParameter;
 import weka.core.setupgenerator.MathParameter;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
@@ -430,6 +431,9 @@ public class SetupGenerator
 	}
       }
       else if (m_Parameters[i] instanceof ListParameter) {
+	evaluated[i] = values.getValue(i);
+      }
+      else if (m_Parameters[i] instanceof MLPLayersParameter) {
 	evaluated[i] = values.getValue(i);
       }
       else {
