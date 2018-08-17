@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Vector;
 
 import junit.framework.TestCase;
@@ -67,7 +69,30 @@ public class ParameterTest extends TestCase {
     return data;
   }
   
-  private Vector<Performance> searchValues(AbstractParameter parameter, Classifier classifier) throws Exception {
+
+  
+  private Vector<Performance> searchValuesRandom(AbstractParameter parameter, Classifier classifier) throws Exception {
+    AbstractParameter[] searchParameters = { parameter };
+    
+    RandomSearch searchAlgorithm = new RandomSearch();
+    searchAlgorithm.setNumExecutionSlots(1);
+    
+    // first we need to run multisearch, to setup most variables OK
+    MultiSearch multiSearch = new MultiSearch();
+    multiSearch.setClassifier(classifier);
+    multiSearch.setSearchParameters(searchParameters);
+    multiSearch.setAlgorithm(searchAlgorithm);
+    multiSearch.buildClassifier(getDummyXORData());
+    
+    // start new executor pool
+    searchAlgorithm.startExecutorPool();
+    Random random = new Random(0);
+    searchAlgorithm.determineBestInSpace(searchAlgorithm.m_Space, getDummyXORData(), getDummyXORData(), 1, random, false);
+    
+    return searchAlgorithm.getPerformances();
+  }
+  
+  private Vector<Performance> searchValuesAll(AbstractParameter parameter, Classifier classifier) throws Exception {
     AbstractParameter[] searchParameters = { parameter };
     
     DefaultSearch searchAlgorithm = new DefaultSearch();
@@ -84,6 +109,16 @@ public class ParameterTest extends TestCase {
     searchAlgorithm.determineBestInSpace(searchAlgorithm.m_Space, getDummyXORData(), getDummyXORData(), 1, false);
     
     return searchAlgorithm.getPerformances();
+  }
+  
+  private void verifyExpectedValues(Map<?, Boolean> expectedValues, int expectedTrues) {
+    int trueCount = 0;
+    for (Entry<?, Boolean> entry : expectedValues.entrySet()) {
+      if (entry.getValue()) {
+	trueCount += 1;
+      }
+    }
+    assertEquals(expectedTrues, trueCount);
   }
   
   public void testMLPLayersParamGettersSetters() throws Exception {
@@ -145,7 +180,7 @@ public class ParameterTest extends TestCase {
     MLPLayersParameter parameter = new MLPLayersParameter();
     String options = "-minLayers 2 -maxLayers 2 -minLayerSize 2 -maxLayerSize 3 -property hiddenLayers";
     parameter.setOptions(Utils.splitOptions(options));
-    Vector<Performance> results = searchValues(parameter, new MultilayerPerceptron());
+    Vector<Performance> results = searchValuesAll(parameter, new MultilayerPerceptron());
     
     Map<String, Boolean> expectedValues = new HashMap<String, Boolean>();
     expectedValues.put("2, 2", false);
@@ -156,7 +191,27 @@ public class ParameterTest extends TestCase {
       MultilayerPerceptron current = (MultilayerPerceptron) result.m_Classifier;
       expectedValues.put(current.getHiddenLayers(), true);
     }
-    assertTrue(expectedValues.get("2, 2") && expectedValues.get("2, 3") && expectedValues.get("3, 2") && expectedValues.get("3, 3"));
+    verifyExpectedValues(expectedValues, 4);
+    assertEquals(expectedValues.size(), 4);
+  }
+  
+  public void testMLPLayersParamLiveRandom() throws Exception {
+    MLPLayersParameter parameter = new MLPLayersParameter();
+    String options = "-minLayers 2 -maxLayers 2 -minLayerSize 2 -maxLayerSize 3 -property hiddenLayers";
+    parameter.setOptions(Utils.splitOptions(options));
+    Vector<Performance> results = searchValuesRandom(parameter, new MultilayerPerceptron());
+    
+    Map<String, Boolean> expectedValues = new HashMap<String, Boolean>();
+    expectedValues.put("2, 2", false);
+    expectedValues.put("2, 3", false);
+    expectedValues.put("3, 2", false);
+    expectedValues.put("3, 3", false);
+    for (Performance result : results) {
+      MultilayerPerceptron current = (MultilayerPerceptron) result.m_Classifier;
+      expectedValues.put(current.getHiddenLayers(), true);
+    }
+    verifyExpectedValues(expectedValues, 4);
+    assertEquals(expectedValues.size(), 4);
   }
 
   public void testMLPLayersParamIllegalLayerSizeRaises() {
@@ -199,18 +254,14 @@ public class ParameterTest extends TestCase {
     ListParameter listparameter = new ListParameter();
     String options = "-list \"true false\" -property \"unpruned\"";
     listparameter.setOptions(Utils.splitOptions(options));
-    Vector<Performance> results = searchValues(listparameter, new J48());
+    Vector<Performance> results = searchValuesAll(listparameter, new J48());
     
-    boolean foundFalse = false;
-    boolean foundTrue = false;
+    Map<Boolean, Boolean> expectedValues = new HashMap<Boolean, Boolean>();
     for (Performance result : results) {
       J48 current = (J48) result.m_Classifier;
-      if (current.getUnpruned()) {
-	foundTrue = true;
-      } else {
-	foundFalse = true;
-      }
+      expectedValues.put(current.getUnpruned(), true);
     }
-    assertTrue(foundFalse && foundTrue);
+    verifyExpectedValues(expectedValues, 2);
+    assertEquals(expectedValues.size(), 2);
   }
 }

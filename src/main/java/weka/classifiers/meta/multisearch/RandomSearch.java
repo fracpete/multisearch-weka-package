@@ -359,12 +359,15 @@ public class RandomSearch
    * @param folds
    *            the number of folds for cross-validation, if &lt;2 then
    *            evaluation based on the training set is used
+   * @param postClean
+   * 		cleans performance vector in the end. Defaults to true,
+   * 		only consider setting to false for testing purposes	
    * @return the best point (not actual parameters!)
    * @throws Exception
    *             if setup or training fails
    */
   protected Performance determineBestInSpace(Space space, Instances train,
-					     Instances test, int folds, Random random) throws Exception {
+					     Instances test, int folds, Random random, boolean postClean) throws Exception {
     Performance result;
     List<Point<Object>> enm;
     Performance performance;
@@ -452,10 +455,21 @@ public class RandomSearch
 
     logPerformances(space, m_Performances);
     log("\nBest performance:\n" + m_Performances.firstElement());
-
-    m_Performances.clear();
-
+    
+    if (postClean) {
+      m_Performances.clear();
+    }
+    
     return result;
+  }
+  
+  /**
+   * Returns the performances of the last determineBestInSpace run, if
+   * this was ran with postClean argument set to false (for testing)
+   * @return vector of performances
+   */
+  public Vector<Performance> getPerformances() {
+    return m_Performances;
   }
 
   /**
@@ -494,7 +508,7 @@ public class RandomSearch
     // find first center
     log("\n=== Search space - Start ===");
     result = determineBestInSpace(m_Space, sample, m_SearchSpaceTestInst,
-      m_SearchSpaceNumFolds, random);
+      m_SearchSpaceNumFolds, random, true);
     log("\nResult: " + result + "\n");
     log("=== Search space - End ===\n");
 
