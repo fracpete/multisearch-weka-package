@@ -20,10 +20,14 @@
 package weka.classifiers.meta.multisearch;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import junit.framework.TestCase;
+import weka.classifiers.Classifier;
+import weka.classifiers.functions.MultilayerPerceptron;
 import weka.classifiers.meta.MultiSearch;
 import weka.classifiers.trees.J48;
 import weka.core.Attribute;
@@ -62,8 +66,39 @@ public class ParameterTest extends TestCase {
     data.setClass(y);
     return data;
   }
+  
+  private Vector<Performance> searchValues(AbstractParameter parameter, Classifier classifier) throws Exception {
+    AbstractParameter[] searchParameters = { parameter };
+    
+    DefaultSearch searchAlgorithm = new DefaultSearch();
+    searchAlgorithm.setNumExecutionSlots(1);
+    // first we need to run multisearch, to setup most variables OK
+    MultiSearch multiSearch = new MultiSearch();
+    multiSearch.setClassifier(classifier);
+    multiSearch.setSearchParameters(searchParameters);
+    multiSearch.setAlgorithm(searchAlgorithm);
+    multiSearch.buildClassifier(getDummyXORData());
+    
+    // start new executor pool
+    searchAlgorithm.startExecutorPool();
+    searchAlgorithm.determineBestInSpace(searchAlgorithm.m_Space, getDummyXORData(), getDummyXORData(), 1, false);
+    
+    return searchAlgorithm.getPerformances();
+  }
+  
+  public void testMLPLayersParamGettersSetters() throws Exception {
+    MLPLayersParameter mlplayers = new MLPLayersParameter();
+    mlplayers.setMinLayers(5);
+    assertEquals(mlplayers.getMinLayers(), 5);
+    mlplayers.setMaxLayers(6);
+    assertEquals(mlplayers.getMaxLayers(), 6);
+    mlplayers.setMinLayerSize(7);
+    assertEquals(mlplayers.getMinLayerSize(), 7);
+    mlplayers.setMaxLayerSize(8);
+    assertEquals(mlplayers.getMaxLayerSize(), 8);
+  }
 
-  public void testMLPLayersParam() throws Exception {
+  public void testMLPLayersParamSmall() throws Exception {
     MLPLayersParameter mlplayers = new MLPLayersParameter();
     String options = "-minLayers 1 -maxLayers 2 -minLayerSize 4 -maxLayerSize 8";
     mlplayers.setOptions(Utils.splitOptions(options));
@@ -104,6 +139,24 @@ public class ParameterTest extends TestCase {
     assertTrue(mlplayers.getMaxLayerSize() == 256);
     String[] items = mlplayers.getItems();
     assertTrue(items.length == MLPLayersParameter.MAX_CANDIDATES_TO_GENERATE);
+  }
+  
+  public void testMLPLayersParamLive() throws Exception {
+    MLPLayersParameter parameter = new MLPLayersParameter();
+    String options = "-minLayers 2 -maxLayers 2 -minLayerSize 2 -maxLayerSize 3 -property hiddenLayers";
+    parameter.setOptions(Utils.splitOptions(options));
+    Vector<Performance> results = searchValues(parameter, new MultilayerPerceptron());
+    
+    Map<String, Boolean> expectedValues = new HashMap<String, Boolean>();
+    expectedValues.put("2, 2", false);
+    expectedValues.put("2, 3", false);
+    expectedValues.put("3, 2", false);
+    expectedValues.put("3, 3", false);
+    for (Performance result : results) {
+      MultilayerPerceptron current = (MultilayerPerceptron) result.m_Classifier;
+      expectedValues.put(current.getHiddenLayers(), true);
+    }
+    assertTrue(expectedValues.get("2, 2") && expectedValues.get("2, 3") && expectedValues.get("3, 2") && expectedValues.get("3, 3"));
   }
 
   public void testMLPLayersParamIllegalLayerSizeRaises() {
@@ -146,23 +199,8 @@ public class ParameterTest extends TestCase {
     ListParameter listparameter = new ListParameter();
     String options = "-list \"true false\" -property \"unpruned\"";
     listparameter.setOptions(Utils.splitOptions(options));
-    AbstractParameter[] searchParameters = { listparameter };
+    Vector<Performance> results = searchValues(listparameter, new J48());
     
-    DefaultSearch searchAlgorithm = new DefaultSearch();
-    searchAlgorithm.setNumExecutionSlots(1);
-    // first we need to run multisearch, to setup most variables OK
-    MultiSearch multiSearch = new MultiSearch();
-    multiSearch.setClassifier(new J48());
-    multiSearch.setSearchParameters(searchParameters);
-    multiSearch.setAlgorithm(searchAlgorithm);
-    multiSearch.buildClassifier(getDummyXORData());
-    
-    // start new executor pool
-    searchAlgorithm.startExecutorPool();
-    searchAlgorithm.determineBestInSpace(searchAlgorithm.m_Space, getDummyXORData(), getDummyXORData(), 1, false);
-    
-    Vector<Performance> results = searchAlgorithm.getPerformances();
-
     boolean foundFalse = false;
     boolean foundTrue = false;
     for (Performance result : results) {
