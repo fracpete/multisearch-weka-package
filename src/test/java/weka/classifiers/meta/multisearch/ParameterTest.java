@@ -208,7 +208,6 @@ public class ParameterTest extends TestCase {
     expectedValues.put("3, 3", false);
     for (Performance result : results) {
       MultilayerPerceptron current = (MultilayerPerceptron) result.m_Classifier;
-      System.out.println(current.getHiddenLayers());
       expectedValues.put(current.getHiddenLayers(), true);
     }
     verifyExpectedValues(expectedValues, 4);
