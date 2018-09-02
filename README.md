@@ -19,6 +19,11 @@ Parameters
   list of values; default is blank-separated, but a custom delimiter
   can be supplied
   
+* `weka.core.setupgenerator.MLPLayersParameter`
+
+  generates hidden layer definitions for the MultiLayerPerceptron
+  classifier  (contributed by [Jan van Rijn](https://github.com/janvanrijn))
+  
 * `weka.core.setupgenerator.ParameterGroup`
 
   allows grouping of dependent parameters, e.g., setting on group sets the kernel 
@@ -39,7 +44,7 @@ Supported parameter types
 * int, long
 * boolean
 * `weka.core.SelectedTag`
-* Java classname
+* Java classname (and possible options for classes implementing `weka.core.OptionHandler`)
 
 
 Search space exploration
