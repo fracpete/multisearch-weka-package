@@ -15,7 +15,7 @@
 
 /*
  * ListParameter.java
- * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2018 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
@@ -30,7 +30,6 @@ import java.util.Vector;
  * Container class for search parameters.
  *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
- * @version $Revision: 4521 $
  */
 public class ListParameter
   extends AbstractPropertyParameter {
@@ -209,6 +208,29 @@ public class ListParameter
       result = getList().split(getCustomDelimiter());
 
     return result;
+  }
+
+  /**
+   * Returns the parameter as space dimensions.
+   *
+   * @return		the dimension
+   * @throws Exception	if instantiation of dimension fails
+   */
+  public SpaceDimension spaceDimension() throws Exception {
+    String[]  	items;
+
+    items = getItems();
+    return new ListSpaceDimension(0, items.length - 1, items, getProperty());
+  }
+
+  /**
+   * Returns the evaluated value.
+   *
+   * @param point	the point to evaluate
+   * @return		the evaluated value
+   */
+  public Object evaluate(Object point) {
+    return point;
   }
 
   /**

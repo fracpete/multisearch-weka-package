@@ -15,13 +15,23 @@
 
 /*
  * MathParameter.java
- * Copyright (C) 2008-2015 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2018 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
 
 import weka.core.Option;
 import weka.core.Utils;
+import weka.core.expressionlanguage.common.IfElseMacro;
+import weka.core.expressionlanguage.common.JavaMacro;
+import weka.core.expressionlanguage.common.MacroDeclarationsCompositor;
+import weka.core.expressionlanguage.common.MathFunctions;
+import weka.core.expressionlanguage.common.Primitives.DoubleExpression;
+import weka.core.expressionlanguage.common.SimpleVariableDeclarations;
+import weka.core.expressionlanguage.common.SimpleVariableDeclarations.VariableInitializer;
+import weka.core.expressionlanguage.common.VariableDeclarationsCompositor;
+import weka.core.expressionlanguage.core.Node;
+import weka.core.expressionlanguage.parser.Parser;
 import weka.filters.unsupervised.attribute.MathExpression;
 
 import java.util.Enumeration;
@@ -31,7 +41,6 @@ import java.util.Vector;
  * Container class for search parameters.
  *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
- * @version $Revision: 4521 $
  */
 public class MathParameter
   extends AbstractPropertyParameter {
@@ -357,6 +366,79 @@ public class MathParameter
    */
   public void setExpression(String value) {
     m_Expression = value;
+  }
+
+  /**
+   * Returns the parameter as space dimensions.
+   *
+   * @return		the dimension
+   * @throws Exception	if instantiation of dimension fails
+   */
+  public SpaceDimension spaceDimension() throws Exception {
+    return new FunctionSpaceDimension(m_Min, m_Max, m_Step, getProperty());
+  }
+
+  /**
+   * Returns the evaluated value.
+   *
+   * @param point	the point to evaluate
+   * @return		the evaluated value
+   */
+  public Object evaluate(Object point) {
+    SimpleVariableDeclarations	vars;
+    Node 			node;
+    VariableInitializer 	curVars;
+    DoubleExpression 		compiled;
+
+    try {
+      vars = new SimpleVariableDeclarations();
+      vars.addDouble("BASE");
+      vars.addDouble("FROM");
+      vars.addDouble("TO");
+      vars.addDouble("STEP");
+      vars.addDouble("I");
+
+      node = Parser.parse(
+	// expression
+	getExpression(),
+	// variables
+	new VariableDeclarationsCompositor(
+	  vars
+	),
+	// macros
+	new MacroDeclarationsCompositor(
+	  new MathFunctions(),
+	  new IfElseMacro(),
+	  new JavaMacro()
+	)
+      );
+
+      if (!(node instanceof DoubleExpression))
+	throw new Exception("Expression must be of type double!");
+
+      curVars = vars.getInitializer();
+      if (curVars.hasVariable("BASE"))
+	curVars.setDouble("BASE", getBase());
+      if (curVars.hasVariable("FROM"))
+	curVars.setDouble("FROM", getMin());
+      if (curVars.hasVariable("TO"))
+	curVars.setDouble("TO", getMax());
+      if (curVars.hasVariable("STEP"))
+	curVars.setDouble("STEP", getStep());
+      if (curVars.hasVariable("I"))
+	curVars.setDouble("I", (Double) point);
+
+      compiled = (DoubleExpression) node;
+
+      return compiled.evaluate();
+    }
+    catch (Exception e) {
+      System.err.println("Failed to evaluate '" + getExpression() + "' using "
+	+ "base=" + getBase() + ", from=" + getMin() + ", to=" + getMax()
+	+ ", step=" + getStep() + ", i=" + point);
+      e.printStackTrace();
+      return Double.NaN;
+    }
   }
 
   /**

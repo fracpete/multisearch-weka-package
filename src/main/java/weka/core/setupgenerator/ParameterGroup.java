@@ -13,9 +13,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
+/*
  * ParameterGroup.java
- * Copyright (C) 2016 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2016-2018 University of Waikato, Hamilton, NZ
  */
 
 package weka.core.setupgenerator;
@@ -30,7 +30,6 @@ import java.util.Vector;
  * Groups dependent parameters.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
- * @version $Revision$
  */
 public class ParameterGroup
   extends AbstractParameter {
@@ -178,6 +177,26 @@ public class ParameterGroup
    */
   public AbstractParameter[] getParameters() {
     return m_Parameters;
+  }
+
+  /**
+   * Returns the parameter as space dimensions.
+   *
+   * @return		always null
+   * @throws Exception	if instantiation of dimension fails
+   */
+  public SpaceDimension spaceDimension() throws Exception {
+    return null;
+  }
+
+  /**
+   * Returns the evaluated value.
+   *
+   * @param point	the point to evaluate
+   * @return		the input
+   */
+  public Object evaluate(Object point) {
+    return point;
   }
 
   /**

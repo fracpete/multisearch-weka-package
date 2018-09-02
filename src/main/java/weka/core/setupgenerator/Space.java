@@ -15,7 +15,7 @@
 
 /*
  * Space.java
- * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2018 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
@@ -67,16 +67,6 @@ public class Space
    */
   public SpaceDimension getDimension(int dimension) {
     return m_Dimensions[dimension];
-  }
-
-  /**
-   * Returns the type of the dimension.
-   *
-   * @param dimension		the dimension index
-   * @return			the type of the dimension
-   */
-  public int getType(int dimension) {
-    return getDimension(dimension).getType();
   }
 
   /**
@@ -293,13 +283,13 @@ public class Space
    * @return		 a string representation
    */
   public String toString() {
-    String	result;
-    int	i;
+    StringBuilder	result;
+    int			i;
 
-    result = dimensions() + "-dimensional space:";
+    result = new StringBuilder(dimensions() + "-dimensional space:");
     for (i = 0; i < dimensions(); i++)
-      result += "\n - " + (i+1) + ". " + getDimension(i);
+      result.append("\n - " + (i+1) + ". " + getDimension(i));
 
-    return result;
+    return result.toString();
   }
 }

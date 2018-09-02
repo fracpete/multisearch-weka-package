@@ -36,7 +36,6 @@ import java.util.Vector;
  * MultiLayerPerceptron.
  *
  * @author janvanrijn (janvanrijn at gmail dot com)
- * @version $Revision: 4521 $
  */
 public class MLPLayersParameter extends AbstractPropertyParameter {
 
@@ -430,6 +429,29 @@ public class MLPLayersParameter extends AbstractPropertyParameter {
       result = generateCandidatesExhaustive(new ArrayList<Integer>());
     }
     return result.toArray(new String[result.size()]);
+  }
+
+  /**
+   * Returns the parameter as space dimensions.
+   *
+   * @return		the dimension
+   * @throws Exception	if instantiation of dimension fails
+   */
+  public SpaceDimension spaceDimension() throws Exception {
+    String[]	items;
+
+    items = getItems();
+    return new ListSpaceDimension(0, items.length - 1, items, getProperty());
+  }
+
+  /**
+   * Returns the evaluated value.
+   *
+   * @param point	the point to evaluate
+   * @return		the evaluated value
+   */
+  public Object evaluate(Object point) {
+    return point;
   }
 
   /**

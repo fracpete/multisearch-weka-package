@@ -15,27 +15,16 @@
 
 /*
  * SetupGenerator.java
- * Copyright (C) 2008-2016 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2018 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core;
 
 import weka.core.PropertyPath.Path;
 import weka.core.PropertyPath.PropertyContainer;
-import weka.core.expressionlanguage.common.IfElseMacro;
-import weka.core.expressionlanguage.common.JavaMacro;
-import weka.core.expressionlanguage.common.MacroDeclarationsCompositor;
-import weka.core.expressionlanguage.common.MathFunctions;
-import weka.core.expressionlanguage.common.Primitives.DoubleExpression;
-import weka.core.expressionlanguage.common.SimpleVariableDeclarations;
-import weka.core.expressionlanguage.common.SimpleVariableDeclarations.VariableInitializer;
-import weka.core.expressionlanguage.common.VariableDeclarationsCompositor;
-import weka.core.expressionlanguage.core.Node;
-import weka.core.expressionlanguage.parser.Parser;
 import weka.core.setupgenerator.AbstractParameter;
 import weka.core.setupgenerator.AbstractPropertyParameter;
 import weka.core.setupgenerator.ListParameter;
-import weka.core.setupgenerator.MLPLayersParameter;
 import weka.core.setupgenerator.MathParameter;
 import weka.core.setupgenerator.Point;
 import weka.core.setupgenerator.Space;
@@ -55,23 +44,12 @@ import java.util.Vector;
  * string values, SelectedTags or classnames (with optional parameters).
  *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
- * @version $Revision: 4521 $
  */
 public class SetupGenerator
   implements Serializable, OptionHandler {
 
   /** for serialization. */
   private static final long serialVersionUID = 7683008589774888142L;
-
-  /** type: mathematical function. */
-  public static final int TYPE_FUNCTION = 0;
-  /** type: explicit, comma-separated list of values. */
-  public static final int TYPE_LIST = 1;
-  /** type of parameter. */
-  public static final Tag[] TAGS_TYPE = {
-    new Tag(TYPE_FUNCTION, "func", "Mathematical function"),
-    new Tag(TYPE_LIST, "list", "Comma-separated list of values")
-  };
 
   /** base object. */
   protected Serializable m_BaseObject;
@@ -337,7 +315,7 @@ public class SetupGenerator
       dims = new SpaceDimension[m_Parameters.length];
       for (i = 0; i < m_Parameters.length; i++) {
 	try {
-	  dims[i] = new SpaceDimension(m_Parameters[i]);
+	  dims[i] = m_Parameters[i].spaceDimension();
 	}
 	catch (Exception e) {
 	  e.printStackTrace();
@@ -359,88 +337,13 @@ public class SetupGenerator
    * @return		the generated value, NaN if the evaluation fails
    */
   public Point<Object> evaluate(Point<Object> values) {
-    String			expr;
-    double			base;
-    double			min;
-    double			max;
-    double			step;
-    Object			value;
     int				i;
     Object[]			evaluated;
-    SimpleVariableDeclarations	vars;
-    Node 			node;
-    VariableInitializer 	curVars;
-    DoubleExpression 		compiled;
 
     evaluated = new Object[values.dimensions()];
 
-    for (i = 0; i < values.dimensions(); i++) {
-      if (m_Parameters[i] instanceof MathParameter) {
-	expr = ((MathParameter) m_Parameters[i]).getExpression();
-	base = ((MathParameter) m_Parameters[i]).getBase();
-	min  = ((MathParameter) m_Parameters[i]).getMin();
-	max  = ((MathParameter) m_Parameters[i]).getMax();
-	step = ((MathParameter) m_Parameters[i]).getStep();
-	value = values.getValue(i);
-
-	try {
-          vars = new SimpleVariableDeclarations();
-          vars.addDouble("BASE");
-          vars.addDouble("FROM");
-          vars.addDouble("TO");
-          vars.addDouble("STEP");
-          vars.addDouble("I");
-
-          node = Parser.parse(
-            // expression
-            expr,
-            // variables
-            new VariableDeclarationsCompositor(
-              vars
-            ),
-            // macros
-            new MacroDeclarationsCompositor(
-              new MathFunctions(),
-              new IfElseMacro(),
-              new JavaMacro()
-            )
-          );
-
-          if (!(node instanceof DoubleExpression))
-            throw new Exception("Expression must be of type double!");
-
-          curVars = vars.getInitializer();
-	  if (curVars.hasVariable("BASE"))
-	    curVars.setDouble("BASE", base);
-	  if (curVars.hasVariable("FROM"))
-	    curVars.setDouble("FROM", min);
-	  if (curVars.hasVariable("TO"))
-	    curVars.setDouble("TO", max);
-	  if (curVars.hasVariable("STEP"))
-	    curVars.setDouble("STEP", step);
-	  if (curVars.hasVariable("I"))
-	    curVars.setDouble("I", (Double) value);
-
-          compiled = (DoubleExpression) node;
-
-	  evaluated[i] = compiled.evaluate();
-	}
-	catch (Exception e) {
-	  evaluated[i] = Double.NaN;
-	  e.printStackTrace();
-	}
-      }
-      else if (m_Parameters[i] instanceof ListParameter) {
-	evaluated[i] = values.getValue(i);
-      }
-      else if (m_Parameters[i] instanceof MLPLayersParameter) {
-	evaluated[i] = values.getValue(i);
-      }
-      else {
-	throw new IllegalStateException(
-	    "Unhandled parameter class '" + m_Parameters[i].getClass().getName() + "'!");
-      }
-    }
+    for (i = 0; i < values.dimensions(); i++)
+      evaluated[i] = m_Parameters[i].evaluate(values.getValue(i));
 
     return new Point<Object>(evaluated);
   }

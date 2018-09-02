@@ -15,7 +15,7 @@
 
 /*
  * AbstractParameter.java
- * Copyright (C) 2008 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2018 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.core.setupgenerator;
@@ -31,7 +31,6 @@ import java.util.Vector;
  * Abstract container class for search parameters.
  *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
- * @version $Revision: 4521 $
  */
 public abstract class AbstractParameter
   implements Serializable, Cloneable, OptionHandler {
@@ -101,6 +100,22 @@ public abstract class AbstractParameter
   public void setOptions(String[] options) throws Exception {
     Utils.checkForRemainingOptions(options);
   }
+
+  /**
+   * Returns the parameter as space dimensions.
+   *
+   * @return		the dimension
+   * @throws Exception	if instantiation of dimension fails
+   */
+  public abstract SpaceDimension spaceDimension() throws Exception;
+
+  /**
+   * Returns the evaluated value.
+   *
+   * @param point	the point to evaluate
+   * @return		the evaluated value
+   */
+  public abstract Object evaluate(Object point);
 
   /**
    * Returns a string representation of the search parameter.
