@@ -97,20 +97,20 @@ Click on one of the following links to download the corresponding Weka package:
 * [2018.8.11](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.8.11/multisearch-2018.8.11.zip)
 * [2017.10.1](https://github.com/fracpete/multisearch-weka-package/releases/download/v2017.10.1/multisearch-2017.10.1.zip)
 * [2017.3.28](https://github.com/fracpete/multisearch-weka-package/releases/download/v2017.3.28/multisearch-2017.3.28.zip)
-* [2016.6.6](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.6.6/multisearch-2016.6.6.zip)
-* [2016.5.31](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.31/multisearch-2016.5.31.zip)
-* [2016.5.25](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.25/multisearch-2016.5.25.zip)
-* [2016.5.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.15/multisearch-2016.5.15.zip)
-* [2016.4.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.30/multisearch-2016.4.30.zip)
-* [2016.4.25](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.25/multisearch-2016.4.25.zip)
-* [2016.4.14](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.14/multisearch-2016.4.14.zip)
-* [2016.1.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.30/multisearch-2016.1.30.zip)
-* [2016.1.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.15/multisearch-2016.1.15.zip)
-* [2016.1.14](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.14/multisearch-2016.1.14.zip)
-* [2016.1.13](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.13/multisearch-2016.1.13.zip)
-* [2015.10.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2015.10.15/multisearch-2015.10.15.zip)
-* [2015.9.2](https://github.com/fracpete/multisearch-weka-package/releases/download/v2015.9.2/multisearch-2015.9.2.zip)
-* [2014.12.10](https://github.com/fracpete/multisearch-weka-package/releases/download/v2014.12.10/multisearch-2014.12.10.zip)
+* old releases: [2016.6.6](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.6.6/multisearch-2016.6.6.zip), 
+  [2016.5.31](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.31/multisearch-2016.5.31.zip),
+  [2016.5.25](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.25/multisearch-2016.5.25.zip),
+  [2016.5.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.15/multisearch-2016.5.15.zip),
+  [2016.4.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.30/multisearch-2016.4.30.zip),
+  [2016.4.25](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.25/multisearch-2016.4.25.zip),
+  [2016.4.14](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.4.14/multisearch-2016.4.14.zip),
+  [2016.1.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.30/multisearch-2016.1.30.zip),
+  [2016.1.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.15/multisearch-2016.1.15.zip),
+  [2016.1.14](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.14/multisearch-2016.1.14.zip),
+  [2016.1.13](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.1.13/multisearch-2016.1.13.zip),
+  [2015.10.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2015.10.15/multisearch-2015.10.15.zip),
+  [2015.9.2](https://github.com/fracpete/multisearch-weka-package/releases/download/v2015.9.2/multisearch-2015.9.2.zip),
+  [2014.12.10](https://github.com/fracpete/multisearch-weka-package/releases/download/v2014.12.10/multisearch-2014.12.10.zip)
 
 
 How to use packages
