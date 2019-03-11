@@ -32,10 +32,11 @@ Weka package
   ant -f build_package.xml -Dpackage=multisearch-2016.6.6 clean make_package
   ```
 
-* Create a release tag on github (`v2016.6.6`)
+* create a release tag on github (`v2016.6.6`)
 * add release notes
 * upload package archive from `dist`
 * add link to this zip file in the `Releases` section of the `README.md` file
+* notify Mark Hall about new release
 
 
 Maven Central
