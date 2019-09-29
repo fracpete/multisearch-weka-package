@@ -15,7 +15,7 @@
 
 /*
  * DefaultSearch.java
- * Copyright (C) 2016-2018 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2016-2019 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -63,7 +63,7 @@ import java.util.concurrent.Future;
  <!-- globalinfo-end -->
  *
  <!-- options-start -->
- * Valid options are: <br>
+ * Valid options are: <p>
  * 
  * <pre> -sample-size &lt;num&gt;
  *  The size (in percent) of the sample to search the inital space with.
@@ -486,7 +486,9 @@ public class DefaultSearch
 
     m_Performances.clear();
 
-    if (folds >= 2)
+    if (test != null)
+      log("Determining best values using test set in space:\n" + space + "\n");
+    else if (folds >= 2)
       log("Determining best values with " + folds + "-fold CV in space:\n" + space + "\n");
     else
       log("Determining best values with evaluation on training set in space:\n" + space + "\n");

@@ -16,7 +16,7 @@
 /*
  * RandomSearch.java
  * Copyright (C) 2016 Leiden University, NL
- * Copyright (C) 2018 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2018-2019 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -43,6 +43,55 @@ import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+/**
+ <!-- globalinfo-start -->
+ * Performs a search of an arbitrary number of parameters of a classifier and chooses the best pair found for the actual filtering and training.<br>
+ * <br><br>
+ <!-- globalinfo-end -->
+ *
+ <!-- options-start -->
+ * Valid options are: <p>
+ *
+ * <pre> -sample-size &lt;num&gt;
+ *  The size (in percent) of the sample to search the inital space with.
+ *  (default: 100)</pre>
+ *
+ * <pre> -num-folds &lt;num&gt;
+ *  The number of cross-validation folds for the search space.
+ *  Numbers smaller than 2 turn off cross-validation and
+ *  just perform evaluation on the training set.
+ *  (default: 2)</pre>
+ *
+ * <pre> -test-set &lt;filename&gt;
+ *  The (optional) test set to use for the search space.
+ *  Gets ignored if pointing to a file. Overrides cross-validation.
+ *  (default: .)</pre>
+ *
+ * <pre> -num-iterations &lt;num&gt;
+ *  The number parameter settings that are tried (i.e., number of points in the search space are checked).
+ *  (default: 100)</pre>
+ *
+ * <pre> -S &lt;num&gt;
+ *  The random seed</pre>
+ *
+ * <pre> -num-slots &lt;num&gt;
+ *  Number of execution slots.
+ *  (default 1 - i.e. no parallelism)</pre>
+ *
+ * <pre> -D
+ *  Whether to enable debugging output.
+ *  (default off)</pre>
+ *
+ <!-- options-end -->
+ *
+ * General notes:
+ * <ul>
+ *   <li>Turn the <i>debug</i> flag on in order to see some progress output in the
+ *       console</li>
+ * </ul>
+ *
+ * @author FracPete (fracpete at waikato dot ac dot nz)
+ */
 public class RandomSearch
   extends AbstractMultiThreadedSearch {
 
@@ -380,7 +429,9 @@ public class RandomSearch
 
     m_Performances.clear();
 
-    if (folds >= 2)
+    if (test != null)
+      log("Determining best values using test set in space:\n" + space + "\n");
+    else if (folds >= 2)
       log("Determining best values with " + folds
 	+ "-fold CV in space:\n" + space + "\n");
     else
@@ -573,5 +624,4 @@ public class RandomSearch
 
     return result;
   }
-
 }
