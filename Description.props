@@ -5,10 +5,10 @@
 PackageName=multisearch
 
 # Version (required)
-Version=2018.9.2
+Version=2019.9.30
 
 #Date (year-month-day)
-Date=2018-09-02
+Date=2019-09-30
 
 # Title (required)
 Title=MultiSearch Parameter Optimization
@@ -29,7 +29,7 @@ License=GPL 3.0
 Description=Generalized parameter optimization similar to GridSearch.
 
 # Package URL for obtaining the package archive (required)
-PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.9.2/multisearch-2018.9.2.zip
+PackageURL=https://github.com/fracpete/multisearch-weka-package/releases/download/v2019.9.30/multisearch-2019.9.30.zip
 
 # URL for further information
 URL=https://github.com/fracpete/multisearch-weka-package
