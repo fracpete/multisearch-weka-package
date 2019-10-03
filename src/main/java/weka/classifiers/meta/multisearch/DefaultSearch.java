@@ -91,6 +91,10 @@ import java.util.concurrent.Future;
  *  Gets ignored if pointing to a file. Overrides cross-validation.
  *  (default: .)</pre>
  * 
+ * <pre> -lenient
+ *  Whether to be more lenient, eg to accept that all results have been cached.
+ *  (default: off)</pre>
+ *
  * <pre> -num-slots &lt;num&gt;
  *  Number of execution slots.
  *  (default 1 - i.e. no parallelism)</pre>
@@ -134,6 +138,9 @@ public class DefaultSearch
 
   /** the optional test set to use for the subsequent evaluation. */
   protected Instances m_SubsequentSpaceTestInst;
+
+  /** whether to be more lenient (does not throw exception when all results cached). */
+  protected boolean m_Lenient = false;
 
   /**
    * Returns a string describing the object.
@@ -222,6 +229,11 @@ public class DefaultSearch
 	+ "\t(default: .)",
       "subsequent-test-set", 1, "-subsequent-test-set <filename>"));
 
+    result.addElement(new Option(
+      "\tWhether to be more lenient, eg to accept that all results have been cached.\n"
+	+ "\t(default: off)",
+      "lenient", 0, "-lenient"));
+
     en = super.listOptions();
     while (en.hasMoreElements())
       result.addElement(en.nextElement());
@@ -256,6 +268,9 @@ public class DefaultSearch
 
     result.add("-subsequent-test-set");
     result.add("" + getSubsequentSpaceTestSet());
+
+    if (getLenient())
+      result.add("-lenient");
 
     options = super.getOptions();
     for (i = 0; i < options.length; i++)
@@ -303,6 +318,8 @@ public class DefaultSearch
       setSubsequentSpaceTestSet(new File(tmpStr));
     else
       setSubsequentSpaceTestSet(new File(System.getProperty("user.dir")));
+
+    setLenient(Utils.getFlag("lenient", options));
 
     super.setOptions(options);
   }
@@ -458,6 +475,36 @@ public class DefaultSearch
   }
 
   /**
+   * Returns the tip text for this property.
+   *
+   * @return 		tip text for this property suitable for
+   * 			displaying in the explorer/experimenter gui
+   */
+  public String lenientTipText() {
+    return "If enable, the search is more lenient (eg does not throw an exception when all results have been cached).";
+  }
+
+  /**
+   * Gets whether to be more lenient, eg not throw an exception when all results
+   * have been cached.
+   *
+   * @return true if more lenient
+   */
+  public boolean getLenient() {
+    return m_Lenient;
+  }
+
+  /**
+   * Sets whether to be more lenient, eg not throw an exception when all results
+   * have been cached.
+   *
+   * @param value true if more lenient
+   */
+  public void setLenient(boolean value) {
+    m_Lenient = value;
+  }
+
+  /**
    * determines the best point for the given space, using CV with
    * specified number of folds.
    *
@@ -537,8 +584,13 @@ public class DefaultSearch
     }
 
     if (allCached) {
-      log("All points were already cached - abnormal state!");
-      throw new IllegalStateException("All points were already cached - abnormal state!");
+      if (!m_Lenient) {
+	log("All points were already cached - abnormal state!");
+	throw new IllegalStateException("All points were already cached - abnormal state!");
+      }
+      else {
+	log("All points were already cached!");
+      }
     }
 
     // sort list
