@@ -93,6 +93,7 @@ Releases
 
 Click on one of the following links to download the corresponding Weka package:
 
+* [2019.10.4](https://github.com/fracpete/multisearch-weka-package/releases/download/v2019.10.4/multisearch-2019.10.4.zip)
 * [2019.9.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2019.9.30/multisearch-2019.9.30.zip)
 * [2018.9.2](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.9.2/multisearch-2018.9.2.zip)
 * [2018.8.16](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.8.16/multisearch-2018.8.16.zip)
@@ -132,7 +133,7 @@ Add the following dependency in your `pom.xml` to include the package:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>multisearch-weka-package</artifactId>
-      <version>2019.9.30</version>
+      <version>2019.10.4</version>
       <type>jar</type>
       <exclusions>
         <exclusion>
