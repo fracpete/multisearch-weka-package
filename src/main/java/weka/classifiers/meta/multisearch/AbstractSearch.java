@@ -15,7 +15,7 @@
 
 /*
  * AbstractSearch.java
- * Copyright (C) 2016-2017 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2016-2020 University of Waikato, Hamilton, NZ
  */
 
 package weka.classifiers.meta.multisearch;
@@ -42,7 +42,6 @@ import java.util.Vector;
  * Ancestor for search algorithms.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
- * @version $Revision$
  */
 public abstract class AbstractSearch
   implements Serializable, Cloneable, OptionHandler, TraceableOptimizer {
@@ -56,7 +55,6 @@ public abstract class AbstractSearch
    * Container class for the search results.
    *
    * @author FracPete (fracpete at waikato dot ac dot nz)
-   * @version $Revision$
    */
   public static class SearchResult
     implements Serializable {
@@ -338,7 +336,7 @@ public abstract class AbstractSearch
    * @return the parameter settings
    */
   public List<Entry<String, Object>> getTraceParameterSettings(int index) {
-    List<Entry<String, Object>> result = new ArrayList<Map.Entry<String,Object>>();
+    List<Entry<String, Object>> result = new Vector<Map.Entry<String,Object>>();
     List<String> dimensions = getSearchDimensions();
     for (int i = 0; i < dimensions.size(); ++i) {
       String parameter = dimensions.get(i);
@@ -393,7 +391,7 @@ public abstract class AbstractSearch
   public void preSearch(Instances data) throws Exception {
     m_Cache        = new PerformanceCache();
     m_Performances = new Vector<Performance>();
-    m_Trace        = new ArrayList<Entry<Integer, Performance>>();
+    m_Trace        = new Vector<Entry<Integer, Performance>>();
 
     m_Owner.getGenerator().reset();
     m_Space = m_Owner.getGenerator().getSpace();
