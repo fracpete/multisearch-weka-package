@@ -48,6 +48,12 @@ Maven Central
   mvn release:clean release:prepare release:perform
   ```
 
+  skip tests with:
+  
+  ```
+  export MAVEN_OPTS="$MAVEN_OPTS -DskipTests=true"
+  ```
+
 * After successful deployment, push the changes out:
 
   ```
@@ -56,3 +62,4 @@ Maven Central
 
 * After the artifacts show up on central, update the artifact version used
   in the dependency fragment of the `README.md` file
+
