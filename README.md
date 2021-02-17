@@ -93,6 +93,7 @@ Releases
 
 Click on one of the following links to download the corresponding Weka package:
 
+* [2021.2.17](https://github.com/fracpete/multisearch-weka-package/releases/download/v2021.2.17/multisearch-2021.2.17.zip)
 * [2020.2.17](https://github.com/fracpete/multisearch-weka-package/releases/download/v2020.2.17/multisearch-2020.2.17.zip)
 * [2019.10.4](https://github.com/fracpete/multisearch-weka-package/releases/download/v2019.10.4/multisearch-2019.10.4.zip)
 * [2019.9.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2019.9.30/multisearch-2019.9.30.zip)
