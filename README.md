@@ -97,12 +97,12 @@ Click on one of the following links to download the corresponding Weka package:
 * [2020.2.17](https://github.com/fracpete/multisearch-weka-package/releases/download/v2020.2.17/multisearch-2020.2.17.zip)
 * [2019.10.4](https://github.com/fracpete/multisearch-weka-package/releases/download/v2019.10.4/multisearch-2019.10.4.zip)
 * [2019.9.30](https://github.com/fracpete/multisearch-weka-package/releases/download/v2019.9.30/multisearch-2019.9.30.zip)
-* [2018.9.2](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.9.2/multisearch-2018.9.2.zip)
-* [2018.8.16](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.8.16/multisearch-2018.8.16.zip)
-* [2018.8.11](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.8.11/multisearch-2018.8.11.zip)
-* [2017.10.1](https://github.com/fracpete/multisearch-weka-package/releases/download/v2017.10.1/multisearch-2017.10.1.zip)
-* [2017.3.28](https://github.com/fracpete/multisearch-weka-package/releases/download/v2017.3.28/multisearch-2017.3.28.zip)
-* old releases: [2016.6.6](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.6.6/multisearch-2016.6.6.zip), 
+* old releases: [2018.9.2](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.9.2/multisearch-2018.9.2.zip),
+  [2018.8.16](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.8.16/multisearch-2018.8.16.zip),
+  [2018.8.11](https://github.com/fracpete/multisearch-weka-package/releases/download/v2018.8.11/multisearch-2018.8.11.zip),
+  [2017.10.1](https://github.com/fracpete/multisearch-weka-package/releases/download/v2017.10.1/multisearch-2017.10.1.zip),
+  [2017.3.28](https://github.com/fracpete/multisearch-weka-package/releases/download/v2017.3.28/multisearch-2017.3.28.zip),
+  [2016.6.6](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.6.6/multisearch-2016.6.6.zip), 
   [2016.5.31](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.31/multisearch-2016.5.31.zip),
   [2016.5.25](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.25/multisearch-2016.5.25.zip),
   [2016.5.15](https://github.com/fracpete/multisearch-weka-package/releases/download/v2016.5.15/multisearch-2016.5.15.zip),
@@ -135,7 +135,7 @@ Add the following dependency in your `pom.xml` to include the package:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>multisearch-weka-package</artifactId>
-      <version>2019.10.4</version>
+      <version>2021.2.17</version>
       <type>jar</type>
       <exclusions>
         <exclusion>
