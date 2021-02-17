@@ -15,7 +15,7 @@
 
 /*
  * MultiSearch.java
- * Copyright (C) 2008-2017 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2008-2021 University of Waikato, Hamilton, New Zealand
  */
 
 package weka.classifiers.meta;
@@ -42,6 +42,8 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Option;
 import weka.core.OptionHandler;
+import weka.core.PropertyPath;
+import weka.core.PropertyPath.Path;
 import weka.core.RevisionUtils;
 import weka.core.SelectedTag;
 import weka.core.SerializedObject;
@@ -51,6 +53,7 @@ import weka.core.Summarizable;
 import weka.core.Tag;
 import weka.core.Utils;
 import weka.core.setupgenerator.AbstractParameter;
+import weka.core.setupgenerator.AbstractPropertyParameter;
 import weka.core.setupgenerator.MathParameter;
 import weka.core.setupgenerator.ParameterGroup;
 import weka.core.setupgenerator.Point;
@@ -207,7 +210,6 @@ import java.util.Vector;
  <!-- options-end -->
  *
  * @author  fracpete (fracpete at waikato dot ac dot nz)
- * @version $Revision: 4521 $
  */
 public class MultiSearch
   extends RandomizableSingleClassifierEnhancer
@@ -1044,10 +1046,14 @@ public class MultiSearch
    */
   public void buildClassifier(Instances data) throws Exception {
     int				i;
+    int				n;
     SearchResult 		result;
     List<AbstractParameter[]>	groups;
     List<SearchResult>		results;
     PerformanceComparator	comp;
+    StringBuilder		invalid;
+
+    m_Trace.clear();
 
     // can classifier handle the data?
     getCapabilities().testWithFail(data);
@@ -1056,8 +1062,24 @@ public class MultiSearch
     data = new Instances(data);
     data.deleteWithMissingClass();
 
-    m_Trace.clear();
-    groups  = groupParameters();
+    // split into groups
+    groups = groupParameters();
+
+    // check whether paths are valid
+    invalid = new StringBuilder();
+    for (i = 0; i < groups.size(); i++) {
+      for (n = 0; n < groups.get(i).length; n++) {
+	if (PropertyPath.find(getClassifier(), new Path(((AbstractPropertyParameter) m_Parameters[i]).getProperty())) == null) {
+	  if (invalid.length() > 0)
+	    invalid.append("\n");
+	  invalid.append("- group " + (i+1) + ", parameter " + (n+1) + ": ").append(((AbstractPropertyParameter) m_Parameters[i]).getProperty());
+	}
+      }
+    }
+    if (invalid.length() > 0)
+      throw new Exception("Property path(s) in parameter(s) are invalid:\n" + invalid);
+
+    // search each group
     results = new ArrayList<SearchResult>();
     for (i = 0; i < groups.size(); i++) {
       if (groups.size() > 1)
