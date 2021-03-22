@@ -43,6 +43,11 @@ public abstract class AbstractMultiThreadedSearch
 
   /** Pool of threads to train models with. */
   protected transient ExecutorService m_ExecutorPool;
+  
+  /** if set to true, the Executor Pool is shared with other threads (generally
+   * across folds). As a consequence, it may not be started or shut down. Only
+   * set to True if you understand the consequences. **/
+  protected boolean m_SharedExecutorPool = false;
 
   /**
    * Gets an enumeration describing the available options.
@@ -149,12 +154,11 @@ public abstract class AbstractMultiThreadedSearch
     stopExecutorPool();
 
     log("Starting thread pool with " + m_NumExecutionSlots + " slots...");
-
     m_ExecutorPool = Executors.newFixedThreadPool(m_NumExecutionSlots);
   }
 
   /**
-   * Stops the ppol of execution threads.
+   * Stops the pool of execution threads.
    */
   protected void stopExecutorPool() {
     log("Shutting down thread pool...");
@@ -163,6 +167,15 @@ public abstract class AbstractMultiThreadedSearch
       m_ExecutorPool.shutdownNow();
 
     m_ExecutorPool = null;
+  }
+  
+  /**
+   * Sets a shared pool of execution threads. If a shared execution pool is
+   * set, the run can be parallelized across folds.
+   */
+  protected void setExecutorPool(ExecutorService executorPool) {
+	m_ExecutorPool = executorPool;
+	m_SharedExecutorPool = true;
   }
 
   /**
@@ -178,7 +191,9 @@ public abstract class AbstractMultiThreadedSearch
     super.preSearch(data);
     if (m_Debug)
       System.out.println("Starting executor pool.");
-    startExecutorPool();
+    if (!m_SharedExecutorPool) {
+      startExecutorPool();
+    }
   }
 
   /**
@@ -191,6 +206,8 @@ public abstract class AbstractMultiThreadedSearch
     super.cleanUpSearch();
     if (m_Debug)
       System.out.println("Stopping executor pool.");
-    stopExecutorPool();
+    if (!m_SharedExecutorPool) {
+      stopExecutorPool();
+    }
   }
 }

@@ -28,6 +28,7 @@ import weka.classifiers.meta.multisearch.AbstractEvaluationFactory;
 import weka.classifiers.meta.multisearch.AbstractEvaluationMetrics;
 import weka.classifiers.meta.multisearch.AbstractSearch;
 import weka.classifiers.meta.multisearch.AbstractSearch.SearchResult;
+import weka.classifiers.meta.multisearch.DefaultBuildClassifierTask;
 import weka.classifiers.meta.multisearch.DefaultEvaluationFactory;
 import weka.classifiers.meta.multisearch.DefaultSearch;
 import weka.classifiers.meta.multisearch.MultiSearchCapable;
@@ -68,6 +69,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.Vector;
 
 /**
@@ -250,6 +253,9 @@ public class MultiSearch
 
   /** for tracking the setups. */
   protected List<Entry<Integer, Performance>> m_Trace;
+  
+  /** shared execution pool, to be used for the search models and re-fit **/
+  protected transient ExecutorService m_ExecutorPool = null;
 
   /**
    * the default constructor.
@@ -275,6 +281,10 @@ public class MultiSearch
       System.err.println("Failed to create copy of default classifier!");
       e.printStackTrace();
     }
+  }
+  
+  public void setSharedExecutionPool(ExecutorService executorPool) {
+	m_ExecutorPool = executorPool;
   }
 
   /**
@@ -1112,8 +1122,19 @@ public class MultiSearch
     log("\n---> train best - start");
     log(Utils.toCommandLine(m_BestClassifier));
     m_Classifier = AbstractClassifier.makeCopy(m_BestClassifier.classifier);
-    m_Classifier.buildClassifier(data);
-
+    
+    if (m_ExecutorPool == null) {
+      m_Classifier.buildClassifier(data);
+    } else {
+    	DefaultBuildClassifierTask newTask = new DefaultBuildClassifierTask(m_Classifier, data);
+    	Future<Boolean> rebuildResult = m_ExecutorPool.submit(newTask);
+    	
+    	if (!rebuildResult.get()) {
+		  System.err.println("Execution of rebuild failed.");
+		  throw new IllegalStateException("Execution of rebuild failed.");
+		}
+    	// note that after this block, m_Classifier is fit on all data.
+    }
     log("\n---> train best - end");
 
     if (m_Debug) {
